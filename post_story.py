@@ -47,6 +47,7 @@ Optional:
   GRAPH_API_VERSION  - defaults to v21.0.
   CYCLE_START_DATE   - YYYY-MM-DD that counts as Day 1. Defaults to 2026-09-05.
   CYCLE_DAY_OVERRIDE - 1 to 12. Post that day's slides regardless of the date. For testing.
+  FORCE_REPOST       - "true" to post again even though today is already in the post log.
   DATA_DIR           - where to write the post log (default: data/). Each published slide
                        is appended to data/posts.jsonl so collect_insights.py and the
                        dashboard (index.html) know what went live and when.
@@ -114,6 +115,23 @@ def cycle_day(start_date_str: str, today: date) -> int | None:
     if delta_days < 0:
         return None
     return delta_days % CYCLE_LENGTH_DAYS + 1
+
+
+def already_posted_today(today: date) -> bool:
+    """True if data/posts.jsonl already has a slide logged for today.
+
+    A manual test run and the daily schedule can easily land on the same day, and
+    without this the day's slides go out twice. Set FORCE_REPOST=true to override.
+    """
+    path = os.path.join(DATA_DIR, "posts.jsonl")
+    if not os.path.exists(path):
+        return False
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line and json.loads(line).get("date") == today.isoformat():
+                return True
+    return False
 
 
 def require_env(name: str) -> str:
@@ -255,6 +273,11 @@ def main() -> None:
         if day is None:
             print(f"{today.isoformat()} is before CYCLE_START_DATE {start_date_str}. Nothing to post yet.")
             return
+
+    if already_posted_today(today) and os.environ.get("FORCE_REPOST", "").lower() != "true":
+        print(f"{today.isoformat()} already has slides in the post log. Not posting again. "
+              f"Run with force_repost if you really want a second set today.")
+        return
 
     ig_user_id = require_env("IG_USER_ID")
     access_token = require_env("IG_ACCESS_TOKEN")

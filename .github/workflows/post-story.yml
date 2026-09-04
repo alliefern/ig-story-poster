@@ -13,6 +13,10 @@ on:
         description: "Post a specific day of the loop (1-12) instead of today's. Leave blank for today's."
         required: false
         default: ""
+      force_repost:
+        description: "Post again even if today's slides are already in the log"
+        type: boolean
+        default: false
 
 permissions:
   contents: write  # so the run can commit data/posts.jsonl back to the repo
@@ -43,6 +47,7 @@ jobs:
           IMAGE_BASE_URL: ${{ secrets.IMAGE_BASE_URL }}
           CYCLE_START_DATE: "2026-09-04"  # the date that counts as Day 1 of the loop
           CYCLE_DAY_OVERRIDE: ${{ inputs.cycle_day }}
+          FORCE_REPOST: ${{ inputs.force_repost }}
         run: python post_story.py
 
       - name: Save post log to the repo
