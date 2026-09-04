@@ -1,0 +1,33 @@
+name: Post Instagram Story
+
+on:
+  schedule:
+    # Runs every day at 16:00 UTC (~5pm UK time in winter, 4pm in summer since
+    # GitHub Actions cron doesn't adjust for daylight saving). Edit the minute/hour
+    # below to change the time. The script itself decides whether today is actually
+    # a "posting day" — this just controls what time it checks.
+    - cron: "0 16 * * *"
+  workflow_dispatch: {}  # lets you trigger a run manually from the Actions tab, for testing
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run poster
+        env:
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          IMAGE_BASE_URL: ${{ secrets.IMAGE_BASE_URL }}
+          REFERENCE_DATE: "2026-09-01"
+        run: python post_story.py
