@@ -100,6 +100,28 @@ def require_env(name: str) -> str:
     return value
 
 
+def check(resp, what: str):
+    """Raise with Meta's own error message attached.
+
+    requests' raise_for_status() only reports the status code, but every Graph API
+    failure carries a JSON body naming the actual problem (bad token, wrong account
+    ID, unfetchable image, missing permission). Losing that turns a five-second fix
+    into a guessing game, so print it and put it in the exception.
+    """
+    if resp.status_code < 400:
+        return resp
+    try:
+        err = resp.json().get("error", {})
+        detail = (f"{err.get('message', resp.text)} "
+                  f"(type {err.get('type')}, code {err.get('code')}, "
+                  f"subcode {err.get('error_subcode')})")
+    except ValueError:
+        detail = resp.text[:500]
+    print(f"ERROR: {what} failed with HTTP {resp.status_code}", file=sys.stderr)
+    print(f"  Meta said: {detail}", file=sys.stderr)
+    raise RuntimeError(f"{what}: {detail}")
+
+
 def create_story_container(ig_user_id: str, access_token: str, image_url: str) -> str:
     resp = requests.post(
         f"{GRAPH_BASE}/{ig_user_id}/media",
@@ -110,7 +132,7 @@ def create_story_container(ig_user_id: str, access_token: str, image_url: str) -
         },
         timeout=60,
     )
-    resp.raise_for_status()
+    check(resp, f"creating story container for {image_url}")
     container_id = resp.json()["id"]
     return container_id
 
@@ -125,12 +147,14 @@ def wait_until_ready(container_id: str, access_token: str, max_wait_seconds: int
             params={"fields": "status_code", "access_token": access_token},
             timeout=30,
         )
-        resp.raise_for_status()
-        status = resp.json().get("status_code")
+        check(resp, f"checking container {container_id}")
+        body = resp.json()
+        status = body.get("status_code")
         if status == "FINISHED":
             return
         if status == "ERROR":
-            raise RuntimeError(f"Container {container_id} failed processing")
+            raise RuntimeError(f"Container {container_id} failed processing: "
+                               f"{body.get('status', 'no detail given')}")
         time.sleep(interval)
         waited += interval
     raise TimeoutError(f"Container {container_id} did not finish processing in time")
@@ -145,7 +169,7 @@ def publish_container(ig_user_id: str, access_token: str, container_id: str) -> 
         },
         timeout=60,
     )
-    resp.raise_for_status()
+    check(resp, f"publishing container {container_id}")
     return resp.json()["id"]
 
 
