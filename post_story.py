@@ -38,16 +38,21 @@ Env vars required (set as GitHub repo secrets, see README):
                       e.g. https://raw.githubusercontent.com/<you>/<repo>/main/images
 Optional:
   REFERENCE_DATE   - YYYY-MM-DD, defaults to 2026-09-01. Days-since-this-date even = post.
+  DATA_DIR         - where to write the post log (default: data/). Each published story is
+                     appended to data/posts.jsonl so collect_insights.py and the dashboard
+                     (index.html) know what went live and when.
 """
 
+import json
 import os
 import sys
 import time
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 import requests
 
 GRAPH_API_VERSION = "v21.0"
 GRAPH_BASE = f"https://graph.facebook.com/{GRAPH_API_VERSION}"
+DATA_DIR = os.environ.get("DATA_DIR", "data")
 
 WEEKDAY_SETS = {
     0: "SET_ONE",    # Monday
@@ -123,13 +128,40 @@ def publish_container(ig_user_id: str, access_token: str, container_id: str) -> 
     return resp.json()["id"]
 
 
-def post_image_to_story(ig_user_id: str, access_token: str, image_url: str, label: str) -> None:
+def record_post(media_id: str, set_name: str, slot: str, filename: str) -> None:
+    """Append one line to data/posts.jsonl describing a story that just went live.
+
+    The insights collector (collect_insights.py) reads this to know which media IDs to
+    fetch numbers for before the story expires, and the dashboard reads it to show what
+    posted and when. The workflow commits the file back to the repo after each run.
+    """
+    os.makedirs(DATA_DIR, exist_ok=True)
+    now = datetime.now(timezone.utc)
+    entry = {
+        "media_id": media_id,
+        "posted_at": now.isoformat(timespec="seconds"),
+        "date": now.date().isoformat(),
+        "set": set_name,
+        "slot": slot,
+        "filename": filename,
+        "run_id": os.environ.get("GITHUB_RUN_ID"),
+    }
+    with open(os.path.join(DATA_DIR, "posts.jsonl"), "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry) + "\n")
+
+
+def post_image_to_story(
+    ig_user_id: str, access_token: str, image_url: str, label: str,
+    set_name: str = "", slot: str = "", filename: str = "",
+) -> str:
     print(f"Creating story container for {label} ({image_url})...")
     container_id = create_story_container(ig_user_id, access_token, image_url)
     print(f"  container id: {container_id}, waiting for processing...")
     wait_until_ready(container_id, access_token)
     media_id = publish_container(ig_user_id, access_token, container_id)
     print(f"  posted. media id: {media_id}")
+    record_post(media_id, set_name, slot, filename)
+    return media_id
 
 
 def main() -> None:
@@ -152,8 +184,10 @@ def main() -> None:
 
     print(f"{today.isoformat()} is a posting day. Posting {day_filename} then {companion_filename}.")
 
-    post_image_to_story(ig_user_id, access_token, day_image_url, f"day image ({day_filename})")
-    post_image_to_story(ig_user_id, access_token, companion_image_url, f"companion image ({companion_filename})")
+    post_image_to_story(ig_user_id, access_token, day_image_url, f"day image ({day_filename})",
+                        set_name=set_name, slot="day", filename=day_filename)
+    post_image_to_story(ig_user_id, access_token, companion_image_url, f"companion image ({companion_filename})",
+                        set_name=set_name, slot="companion", filename=companion_filename)
 
     print("Done.")
 

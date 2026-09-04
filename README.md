@@ -3,6 +3,10 @@
 Posts a "day image" (changes by weekday) plus a "constant image" (always the same)
 to your Instagram Story every other calendar day, on autopilot via GitHub Actions.
 
+It also keeps its own records. Every story that posts is logged, its numbers are
+collected the next afternoon, and `index.html` turns all of that into a dashboard
+(the Story Register) you can open in a browser via GitHub Pages.
+
 ## The honest version of how this works
 
 Instagram/Meta does not let anyone auto-post to Stories from a personal account —
@@ -77,10 +81,56 @@ skipped automatically.
 Go to the repo's **Actions** tab → "Post Instagram Story" → **Run workflow** to
 trigger it manually and confirm it works before trusting the schedule.
 
+## The dashboard (Story Register)
+
+Three files work together:
+
+| File | What it does | When it runs |
+|---|---|---|
+| `post_story.py` | Posts the two slides, then appends each one to `data/posts.jsonl` (media ID, time, set, slide). | Daily 16:00 UTC, posts on posting days only |
+| `collect_insights.py` | Fetches views, reach, replies, shares, profile visits, follows and the tap/exit breakdown for every story posted in the last 24 hours, appends them to `data/insights.jsonl`, and writes `data/status.json` (last run, token expiry). | Daily 15:30 UTC (`collect-insights.yml`) |
+| `index.html` | Reads those files and draws the dashboard: what's going live next, automation health, last 7 days against the 7 before, weekly trend, which set performs, and a table of every story. | In your browser |
+
+Why the collector is a separate daily job: Meta only serves Story insights while
+the Story is live, i.e. 24 hours. After that the numbers are gone from the API.
+So the collector runs half an hour before the next post, grabs near-final numbers
+for yesterday's story, and commits them to the repo. Those commits also count as
+repository activity, which matters because GitHub switches off scheduled workflows
+in a public repo after 60 days without a commit.
+
+What Meta does not give you: names. The API returns counts. Who replied is in
+your DMs; who viewed is in the app's viewer list for the 24 hours the story is up.
+
+### Turn the dashboard on
+
+1. Repo **Settings → Pages → Build and deployment**: Source "Deploy from a branch",
+   branch `main`, folder `/ (root)`. Save.
+2. A minute later it's live at `https://<your-username>.github.io/<repo-name>/`.
+3. Both workflows need to be able to commit: **Settings → Actions → General →
+   Workflow permissions → "Read and write permissions"**. (The workflow files ask
+   for this too, but the repo setting has to allow it.)
+
+Everything in `data/` is public, because the repo is. That's aggregate counts per
+story, nothing personal, but if you'd rather your view counts weren't readable by
+anyone with the URL, say so and the data can go somewhere private instead.
+
+### If you change the schedule
+
+`REFERENCE_DATE` and the cron hour live in `.github/workflows/post-story.yml`.
+The dashboard has its own copy in the `CONFIG` block at the top of `index.html`
+so it can show upcoming posting days. Change both.
+
+### Fonts
+
+The dashboard uses Bricolage Grotesque as a stand-in for Gopher. To use Gopher,
+add an `@font-face` for your webfont at the top of `index.html` and put it first
+in `--font-display`.
+
 ## Ongoing maintenance
 
 - **Every ~60 days:** refresh `IG_ACCESS_TOKEN` (repeat the token exchange in step 1.4)
-  and update the GitHub secret.
+  and update the GitHub secret. The dashboard's "Meta token" row counts down to the
+  expiry date so you can see it coming.
 - **To change posting time:** edit the `cron` line in `.github/workflows/post-story.yml`
   (it's in UTC).
 - **To change which images post:** just replace the files in `images/` — same filenames.

@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Story Register</title>
+<meta name="description" content="What the Instagram Story auto-poster put live, when, and how each story performed, week against week.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+  /* Gopher is the BBB display face. It isn't on Google Fonts, so Bricolage Grotesque
+     stands in. To use Gopher: add an @font-face pointing at your woff2 and change
+     --font-display below. Nothing else needs touching. */
+  :root {
+    color-scheme: light;
+    --font-display: "Bricolage Grotesque", "Gopher", "Avenir Next", "Segoe UI", sans-serif;
+    --font-body: "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+
+    --bg: #FFF8F5;            /* Warm Pearl */
+    --panel: #FFFFFF;
+    --panel-2: #FDF0EC;
+    --ink: #1D080D;           /* Black Cherry */
+    --ink-2: #6E4A53;
+    --ink-3: #A08089;
+    --line: #F1D9DB;
+    --line-2: #E6C3C7;
+    --blush: #F7D9D9;
+    --pink: #EEA0AA;
+    --rose: #E97896;
+    --cherry: #B90F3B;
+
+    --series-1: #B90F3B;      /* day image  (validated on #FFF8F5) */
+    --series-2: #2A8CAE;      /* companion  (validated on #FFF8F5) */
+    --ghost: #E9D3D5;         /* previous period / context bars */
+    --good: #1F8A5C;
+    --warn: #B4731C;
+    --bad: #B03A2E;
+
+    --holo: linear-gradient(118deg, #A9EFF2 0%, #C9C2FF 22%, #FFC6E0 44%, #FFD9B8 64%, #FFF6E8 82%, #F2DFB0 100%);
+    --shadow: 0 1px 2px rgba(29,8,13,.06), 0 8px 24px -12px rgba(185,15,59,.18);
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #1D080D;
+      --panel: #2A1218;
+      --panel-2: #33171E;
+      --ink: #FFF3F0;
+      --ink-2: #DAB9C0;
+      --ink-3: #A8878F;
+      --line: #40222A;
+      --line-2: #563039;
+      --blush: #4A2630;
+      --pink: #C0707C;
+      --rose: #E97896;
+      --cherry: #E4607F;
+      --series-1: #E4607F;    /* validated on #1D080D */
+      --series-2: #2AA3C4;    /* validated on #1D080D */
+      --ghost: #4C2A33;
+      --good: #4FC08A;
+      --warn: #E0A44A;
+      --bad: #E0705F;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #1D080D;
+    --panel: #2A1218;
+    --panel-2: #33171E;
+    --ink: #FFF3F0;
+    --ink-2: #DAB9C0;
+    --ink-3: #A8878F;
+    --line: #40222A;
+    --line-2: #563039;
+    --blush: #4A2630;
+    --pink: #C0707C;
+    --rose: #E97896;
+    --cherry: #E4607F;
+    --series-1: #E4607F;
+    --series-2: #2AA3C4;
+    --ghost: #4C2A33;
+    --good: #4FC08A;
+    --warn: #E0A44A;
+    --bad: #E0705F;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--series-2); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 64px; }
+
+  /* ---------- masthead ---------- */
+  .masthead { position: relative; overflow: hidden; padding: 36px 0 22px; border-bottom: 1px solid var(--line-2); }
+  .masthead .eyebrow { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); font-weight: 600; }
+  .masthead h1 {
+    font-family: var(--font-display); font-weight: 800; font-variation-settings: "opsz" 96;
+    font-size: clamp(56px, 11vw, 132px); line-height: .88; letter-spacing: -.03em; margin: 10px 0 14px; text-transform: uppercase;
+    text-wrap: balance;
+  }
+  .masthead h1 .thin { font-weight: 500; letter-spacing: -.02em; }
+  .masthead p.lede { max-width: 62ch; margin: 0; color: var(--ink-2); font-size: 15px; }
+  .holo-checker {
+    position: absolute; right: -60px; top: -40px; width: 340px; height: 260px; transform: rotate(-8deg);
+    background: var(--holo);
+    -webkit-mask: repeating-conic-gradient(#000 0 25%, transparent 0 50%) 0 0 / 34px 34px, linear-gradient(200deg, #000 30%, transparent 78%);
+    -webkit-mask-composite: source-in; mask-composite: intersect;
+    mask: repeating-conic-gradient(#000 0 25%, transparent 0 50%) 0 0 / 34px 34px, linear-gradient(200deg, #000 30%, transparent 78%);
+    pointer-events: none; opacity: .95;
+  }
+  :root[data-theme="dark"] .holo-checker { opacity: .8; }
+  @media (max-width: 720px) { .holo-checker { width: 220px; height: 170px; right: -50px; } }
+
+  .sample-banner { margin: 18px 0 0; padding: 10px 14px; border: 1px dashed var(--pink); border-radius: 10px; background: var(--panel-2); font-size: 13px; color: var(--ink-2); }
+  .sample-banner strong { color: var(--ink); }
+
+  /* ---------- sections ---------- */
+  section { padding-top: 34px; }
+  .sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px; margin-bottom: 14px; }
+  .sec-head h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: -.01em; margin: 0; }
+  .sec-head .note { font-size: 13px; color: var(--ink-3); }
+
+  /* ---------- going live ---------- */
+  .live-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); gap: 18px; }
+  @media (max-width: 860px) { .live-grid { grid-template-columns: 1fr; } }
+  .ledger { border-top: 1px solid var(--line-2); }
+  .ledger-row { display: grid; grid-template-columns: 118px 1fr auto; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .ledger-row.today { background: linear-gradient(90deg, var(--panel-2), transparent); margin: 0 -10px; padding-left: 10px; padding-right: 10px; border-radius: 8px; }
+  .ledger-row .when { font-variant-numeric: tabular-nums; }
+  .ledger-row .when b { display: block; font-family: var(--font-display); font-weight: 700; font-size: 17px; line-height: 1.15; }
+  .ledger-row .when span { font-size: 12px; color: var(--ink-3); letter-spacing: .06em; text-transform: uppercase; }
+  .ledger-row .what { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .thumbs { display: flex; gap: 6px; }
+  .thumb { width: 34px; height: 58px; border-radius: 6px; overflow: hidden; background: var(--blush); border: 1px solid var(--line-2); display: grid; place-items: center; text-align: center; padding: 2px; font-size: 8.5px; line-height: 1.1; letter-spacing: .02em; color: var(--ink-3); font-weight: 600; overflow-wrap: anywhere; }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .what .set { font-weight: 600; }
+  .what .files { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .status-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line-2); color: var(--ink-2); white-space: nowrap; }
+  .status-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); }
+  .status-pill.good .dot { background: var(--good); }
+  .status-pill.warn .dot { background: var(--warn); }
+  .status-pill.bad .dot { background: var(--bad); }
+  .status-pill.due .dot { background: var(--series-2); }
+
+  .health { border: 1px solid var(--line-2); border-radius: var(--radius); padding: 16px 18px; background: var(--panel); box-shadow: var(--shadow); align-self: start; }
+  .health h3 { margin: 0 0 10px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); font-weight: 600; }
+  .health-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 14px; }
+  .health-row:first-of-type { border-top: 0; }
+  .health-row .k { color: var(--ink-2); }
+  .health-row .v { font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+  .health-row .v small { display: block; font-weight: 400; color: var(--ink-3); font-size: 12px; }
+  .token-bar { height: 6px; border-radius: 3px; background: var(--blush); margin-top: 8px; overflow: hidden; }
+  .token-bar i { display: block; height: 100%; background: var(--holo); border-radius: 3px; }
+  .token-bar.warn i { background: var(--warn); }
+  .token-bar.bad i { background: var(--bad); }
+
+  /* ---------- KPI strip ---------- */
+  .kpis { display: grid; grid-template-columns: repeat(6, 1fr); border: 1px solid var(--line-2); border-radius: var(--radius); background: var(--panel); box-shadow: var(--shadow); overflow: hidden; }
+  @media (max-width: 960px) { .kpis { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 560px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+  .kpi { padding: 16px 18px 14px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); min-width: 0; }
+  .kpi .label { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); font-weight: 600; }
+  .kpi .value { font-family: var(--font-display); font-weight: 800; font-size: 34px; line-height: 1.05; margin: 6px 0 6px; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .kpi .delta { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink-3); }
+  .kpi .delta.up { color: var(--good); }
+  .kpi .delta.down { color: var(--warn); }
+  .kpi .delta .prev { color: var(--ink-3); font-weight: 400; }
+  .kpi-foot { font-size: 12.5px; color: var(--ink-3); margin: 10px 2px 0; max-width: 90ch; }
+
+  /* ---------- filter row ---------- */
+  .filters { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 14px; }
+  .seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 999px; padding: 3px; background: var(--panel); }
+  .seg button { appearance: none; border: 0; background: transparent; color: var(--ink-2); font: inherit; font-weight: 600; font-size: 13px; padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  .legend { display: inline-flex; gap: 16px; font-size: 13px; color: var(--ink-2); align-items: center; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+  /* ---------- charts ---------- */
+  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 860px) { .charts { grid-template-columns: 1fr; } }
+  .chart { border: 1px solid var(--line-2); border-radius: var(--radius); background: var(--panel); box-shadow: var(--shadow); padding: 16px 18px 10px; min-width: 0; }
+  .chart.wide { grid-column: 1 / -1; }
+  .chart h3 { margin: 0; font-size: 15px; font-weight: 600; }
+  .chart .sub { margin: 2px 0 8px; font-size: 12.5px; color: var(--ink-3); }
+  .chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .chart .empty { padding: 36px 0; text-align: center; color: var(--ink-3); font-size: 14px; }
+  .axis text { fill: var(--ink-3); font-size: 11px; font-family: var(--font-body); }
+  .grid line { stroke: var(--line); stroke-width: 1; }
+  .baseline { stroke: var(--line-2); stroke-width: 1; }
+  .dl { fill: var(--ink-2); font-size: 11px; font-weight: 600; font-family: var(--font-body); }
+  .weekband { fill: var(--panel-2); }
+  .hit { fill: transparent; cursor: default; }
+  .hit:hover { fill: rgba(185,15,59,.05); }
+
+  #tip { position: fixed; z-index: 9; pointer-events: none; background: var(--ink); color: var(--bg); padding: 8px 10px; border-radius: 8px; font-size: 12.5px; line-height: 1.4; box-shadow: 0 6px 20px rgba(0,0,0,.25); max-width: 260px; }
+  #tip b { display: block; font-size: 13px; margin-bottom: 2px; }
+  #tip .row { display: flex; justify-content: space-between; gap: 14px; font-variant-numeric: tabular-nums; }
+  #tip .row span:last-child { font-weight: 600; }
+
+  /* ---------- table ---------- */
+  .tablewrap { overflow-x: auto; border: 1px solid var(--line-2); border-radius: var(--radius); background: var(--panel); box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; min-width: 900px; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 9px 12px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); font-weight: 600; background: var(--panel-2); position: sticky; top: 0; }
+  th:first-child, td:first-child, th.l, td.l { text-align: left; }
+  tr:last-child td { border-bottom: 0; }
+  td .slide { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 7px; vertical-align: -1px; }
+  td.muted { color: var(--ink-3); }
+  .foot { margin-top: 26px; font-size: 12.5px; color: var(--ink-3); max-width: 90ch; }
+  .foot a { color: var(--ink-2); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="holo-checker" aria-hidden="true"></div>
+    <div class="eyebrow"><span>Allie Fern</span><span>Instagram Stories</span><span id="eyebrow-date"></span></div>
+    <h1>Story <span class="thin">Register</span></h1>
+    <p class="lede">What the auto-poster put live, when, and how each story did. Numbers are collected once, just before Meta deletes them at the 24-hour mark, so every story here is near-final.</p>
+    <div id="sample-banner" class="sample-banner" hidden><strong>Sample data.</strong> These numbers are invented to show the layout. Real ones appear here once the first story posts and the collector runs the next afternoon.</div>
+  </header>
+
+  <section id="live">
+    <div class="sec-head"><h2>Going live</h2><span class="note" id="live-note"></span></div>
+    <div class="live-grid">
+      <div class="ledger" id="ledger"></div>
+      <aside class="health" id="health">
+        <h3>Automation health</h3>
+        <div id="health-rows"></div>
+      </aside>
+    </div>
+  </section>
+
+  <section id="pulse">
+    <div class="sec-head"><h2>Last 7 days</h2><span class="note">totals, against the 7 days before</span></div>
+    <div class="kpis" id="kpis"></div>
+    <p class="kpi-foot">Any 7-day window holds 3 or 4 posting days, never the same twice running, so glance at the story count before reading a swing as real. Meta's API returns counts, not people. Who replied is in your DMs; who viewed is in the app's viewer list for the 24 hours the story is up, and nowhere after that.</p>
+  </section>
+
+  <section id="charts-sec">
+    <div class="sec-head"><h2>Trend</h2><span class="note" id="trend-note"></span></div>
+    <div class="filters">
+      <div class="seg" role="group" aria-label="Metric" id="metric-seg">
+        <button type="button" data-metric="views" aria-pressed="true">Views</button>
+        <button type="button" data-metric="reach" aria-pressed="false">Reach</button>
+        <button type="button" data-metric="replies" aria-pressed="false">Replies</button>
+        <button type="button" data-metric="shares" aria-pressed="false">Shares</button>
+      </div>
+      <div class="legend"><span><i style="background:var(--series-1)"></i>Day image (slide 1)</span><span><i style="background:var(--series-2)"></i>Companion (slide 2)</span></div>
+    </div>
+    <div class="charts">
+      <div class="chart" id="chart-weekly"></div>
+      <div class="chart" id="chart-sets"></div>
+      <div class="chart wide" id="chart-stories"></div>
+    </div>
+  </section>
+
+  <section id="register">
+    <div class="sec-head"><h2>Every story</h2><span class="note" id="register-note"></span></div>
+    <div class="tablewrap"><table id="table"></table></div>
+    <p class="foot" id="foot"></p>
+  </section>
+</div>
+<div id="tip" hidden></div>
+
+<!-- DATA-INJECT -->
+<script>
+(function () {
+  'use strict';
+
+  // ---- configuration: keep in step with post_story.py and the workflow ----
+  const CONFIG = {
+    owner: 'alliefern',
+    repo: 'ig-story-poster',
+    referenceDate: '2026-09-01',     // same value as REFERENCE_DATE in post-story.yml
+    postHourUTC: 16,                 // the cron hour in post-story.yml
+    weekdaySets: ['SET_ONE', 'SET_TWO', 'SET_THREE', 'SET_FOUR', 'SET_FIVE', 'SET_SIX', 'SET_SEVEN'], // Mon..Sun
+    tokenWarnDays: 14,
+  };
+  const RAW_BASE = `https://raw.githubusercontent.com/${CONFIG.owner}/${CONFIG.repo}/main/`;
+  const DAY = 86400000;
+  const DAYNAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const METRIC_LABEL = { views: 'Views', reach: 'Reach', replies: 'Replies', shares: 'Shares' };
+  const fmt = new Intl.NumberFormat('en-GB');
+  const fmtDate = (d) => d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const fmtDateTime = (d) => d.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const utcDate = (iso) => new Date(iso + 'T00:00:00Z');
+  const isoDay = (d) => d.toISOString().slice(0, 10);
+  const mondayOf = (d) => { const x = new Date(d); const wd = (x.getUTCDay() + 6) % 7; x.setUTCDate(x.getUTCDate() - wd); x.setUTCHours(0, 0, 0, 0); return x; };
+  const weekdayIndex = (d) => (d.getUTCDay() + 6) % 7;
+  const isPostingDay = (d) => Math.round((d - utcDate(CONFIG.referenceDate)) / DAY) % 2 === 0;
+  const setForDate = (d) => CONFIG.weekdaySets[weekdayIndex(d)];
+  const setLabel = (s) => { const i = CONFIG.weekdaySets.indexOf(s); return i < 0 ? s : `${s} · ${DAYNAMES[i]}`; };
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const $ = (id) => document.getElementById(id);
+
+  // ---- data loading ----
+  function parseJsonl(text) {
+    return text.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => JSON.parse(l));
+  }
+  async function fetchText(path) {
+    const tryUrl = async (url) => { const r = await fetch(url, { cache: 'no-store' }); if (!r.ok) throw new Error(`${r.status} for ${url}`); return r.text(); };
+    try { return await tryUrl(path); } catch (e) { return tryUrl(RAW_BASE + path); }
+  }
+  async function loadData() {
+    if (window.__STORY_DATA__) return window.__STORY_DATA__;
+    const [posts, insights, status] = await Promise.all([
+      fetchText('data/posts.jsonl').then(parseJsonl).catch(() => []),
+      fetchText('data/insights.jsonl').then(parseJsonl).catch(() => []),
+      fetchText('data/status.json').then(JSON.parse).catch(() => null),
+    ]);
+    return { posts, insights, status };
+  }
+
+  // ---- model ----
+  function buildStories(posts, insights) {
+    const latest = new Map();
+    for (const row of insights) {
+      const prev = latest.get(row.media_id);
+      if (!prev || row.collected_at > prev.collected_at) latest.set(row.media_id, row);
+    }
+    return posts.map((p) => {
+      const ins = latest.get(p.media_id);
+      const m = (ins && ins.metrics) || {};
+      const nav = m.navigation || {};
+      const views = m.views ?? null;
+      return {
+        ...p,
+        postedAt: new Date(p.posted_at),
+        day: utcDate(p.date),
+        collected: !!(ins && ins.metrics && Object.keys(ins.metrics).length),
+        missed: !!(ins && ins.errors && ins.errors.some((e) => /expired/.test(e))),
+        views, reach: m.reach ?? null, replies: m.replies ?? null, shares: m.shares ?? null,
+        profile_visits: m.profile_visits ?? null, follows: m.follows ?? null,
+        total_interactions: m.total_interactions ?? null,
+        tap_exit: nav.tap_exit ?? null, tap_back: nav.tap_back ?? null,
+        tap_next: (nav.tap_forward ?? 0) + (nav.swipe_forward ?? 0),
+        exitRate: views ? (nav.tap_exit ?? 0) / views : null,
+      };
+    }).sort((a, b) => a.postedAt - b.postedAt);
+  }
+  const sum = (arr, k) => arr.reduce((t, s) => t + (s[k] || 0), 0);
+  const avg = (arr, k) => { const v = arr.filter((s) => s[k] != null); return v.length ? sum(v, k) / v.length : null; };
+
+  // ---- going live ----
+  function renderLedger(stories, now) {
+    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const byDate = new Map();
+    for (const s of stories) { if (!byDate.has(s.date)) byDate.set(s.date, []); byDate.get(s.date).push(s); }
+    const rows = [];
+    // last two posting days that actually happened
+    const pastDates = [...byDate.keys()].sort().slice(-2);
+    for (const d of pastDates) rows.push({ date: utcDate(d), kind: 'past', stories: byDate.get(d) });
+    // upcoming posting days, today included
+    for (let i = 0, found = 0; found < 5 && i < 14; i++) {
+      const d = new Date(today.getTime() + i * DAY);
+      if (!isPostingDay(d)) continue;
+      if (i === 0 && byDate.has(isoDay(d))) continue;
+      rows.push({ date: d, kind: i === 0 ? 'today' : 'next', stories: [] });
+      found++;
+    }
+    rows.sort((a, b) => a.date - b.date);
+    $('ledger').innerHTML = rows.map((r) => {
+      const set = setForDate(r.date);
+      const isToday = isoDay(r.date) === isoDay(today);
+      let pill;
+      if (r.kind === 'past') {
+        const posted = r.stories.length;
+        const collected = r.stories.filter((s) => s.collected).length;
+        const missed = r.stories.some((s) => s.missed);
+        if (posted < 2) pill = `<span class="status-pill warn"><i class="dot"></i>${posted} of 2 slides posted</span>`;
+        else if (collected === posted) pill = `<span class="status-pill good"><i class="dot"></i>Posted · numbers in</span>`;
+        else if (missed) pill = `<span class="status-pill warn"><i class="dot"></i>Posted · numbers missed</span>`;
+        else pill = `<span class="status-pill good"><i class="dot"></i>Posted · numbers due ${fmtDate(new Date(r.date.getTime() + DAY))}</span>`;
+      } else if (r.kind === 'today') {
+        const due = new Date(r.date); due.setUTCHours(CONFIG.postHourUTC);
+        pill = now < due ? `<span class="status-pill due"><i class="dot"></i>Due today, ${due.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>`
+                         : `<span class="status-pill warn"><i class="dot"></i>Expected today, not logged yet</span>`;
+      } else {
+        pill = `<span class="status-pill"><i class="dot"></i>Scheduled</span>`;
+      }
+      const thumb = (file) => `<div class="thumb"><img src="images/${file}" alt="" loading="lazy" onerror="this.parentNode.textContent='${file.replace('SET_', '').replace('.jpg', '').replace('_A', ' A')}'"></div>`;
+      const dayLabel = isToday ? 'Today' : fmtDate(r.date).replace(/^\w+,\s*/, '');
+      return `<div class="ledger-row ${isToday ? 'today' : ''}">
+        <div class="when"><b>${esc(dayLabel)}</b><span>${DAYNAMES[weekdayIndex(r.date)]}${r.kind === 'past' && r.stories[0] ? ' · ' + r.stories[0].postedAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : ''}</span></div>
+        <div class="what"><div class="thumbs">${thumb(set + '.jpg')}${thumb(set + '_A.jpg')}</div><div><div class="set">${esc(set)}</div><div class="files">${esc(set)}.jpg then ${esc(set)}_A.jpg</div></div></div>
+        ${pill}
+      </div>`;
+    }).join('');
+    const nextRow = rows.find((r) => r.kind !== 'past');
+    $('live-note').textContent = nextRow ? `next post ${isoDay(nextRow.date) === isoDay(today) ? 'today' : fmtDate(nextRow.date)}, then every second day` : '';
+  }
+
+  // ---- automation health ----
+  async function renderHealth(status, stories, now) {
+    const rows = [];
+    const ghRun = async (file) => {
+      try {
+        const r = await fetch(`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/actions/workflows/${file}/runs?per_page=1`, { headers: { Accept: 'application/vnd.github+json' } });
+        if (!r.ok) return null;
+        const j = await r.json();
+        return (j.workflow_runs || [])[0] || null;
+      } catch (e) { return null; }
+    };
+    const runRow = (label, run) => {
+      if (!run) return { k: label, v: 'Couldn’t check', sub: 'GitHub didn’t answer from here', cls: '' };
+      const ok = run.conclusion === 'success';
+      const when = new Date(run.updated_at);
+      return { k: label, v: ok ? 'Ran fine' : (run.status !== 'completed' ? 'Running now' : 'Failed'), sub: fmtDateTime(when), cls: ok ? 'good' : (run.status !== 'completed' ? '' : 'bad'), href: run.html_url };
+    };
+    const [postRun, collectRun] = window.__STORY_DATA__ ? [null, null] : await Promise.all([ghRun('post-story.yml'), ghRun('collect-insights.yml')]);
+    rows.push(runRow('Poster', postRun));
+    rows.push(runRow('Insights collector', collectRun));
+
+    const last = stories[stories.length - 1];
+    rows.push({ k: 'Last story logged', v: last ? fmtDate(last.day) : 'None yet', sub: last ? `${last.set} · ${last.postedAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}` : 'first post lands on the next scheduled day', cls: '' });
+
+    let tokenHtml = '';
+    if (status && status.token_expires_at) {
+      const exp = new Date(status.token_expires_at * 1000);
+      const daysLeft = Math.floor((exp - now) / DAY);
+      const cls = daysLeft <= 3 ? 'bad' : (daysLeft <= CONFIG.tokenWarnDays ? 'warn' : '');
+      const pct = Math.max(0, Math.min(100, (daysLeft / 60) * 100));
+      rows.push({ k: 'Meta token', v: daysLeft < 0 ? 'Expired' : `${daysLeft} days left`, sub: `expires ${fmtDate(exp)} · refresh + update the secret`, cls: daysLeft < 0 ? 'bad' : cls });
+      tokenHtml = `<div class="token-bar ${cls}"><i style="width:${pct}%"></i></div>`;
+    } else if (status && status.token_is_valid === false) {
+      rows.push({ k: 'Meta token', v: 'Invalid', sub: 'refresh it and update IG_ACCESS_TOKEN', cls: 'bad' });
+    } else {
+      rows.push({ k: 'Meta token', v: 'Not checked yet', sub: status && status.token_check_error ? 'Meta wouldn’t report an expiry' : 'known after the first collector run', cls: '' });
+    }
+    $('health-rows').innerHTML = rows.map((r) => `<div class="health-row"><span class="k">${esc(r.k)}</span><span class="v">${r.href ? `<a href="${esc(r.href)}" target="_blank" rel="noopener">` : ''}<span class="status-pill ${r.cls}"><i class="dot"></i>${esc(r.v)}</span>${r.href ? '</a>' : ''}<small>${esc(r.sub)}</small></span></div>`).join('') + tokenHtml;
+  }
+
+  // ---- KPIs ----
+  function renderKpis(stories, now) {
+    const cut1 = now.getTime() - 7 * DAY, cut2 = now.getTime() - 14 * DAY;
+    const cur = stories.filter((s) => s.postedAt >= cut1);
+    const prev = stories.filter((s) => s.postedAt >= cut2 && s.postedAt < cut1);
+    const stay = (arr) => {
+      const d = sum(arr.filter((s) => s.slot === 'day'), 'views'), c = sum(arr.filter((s) => s.slot === 'companion'), 'views');
+      return d ? c / d : null;
+    };
+    const tiles = [
+      { label: 'Stories posted', cur: cur.length, prev: prev.length, kind: 'int' },
+      { label: 'Views', cur: sum(cur, 'views'), prev: sum(prev, 'views'), kind: 'int' },
+      { label: 'Reach', cur: sum(cur, 'reach'), prev: sum(prev, 'reach'), kind: 'int' },
+      { label: 'Replies', cur: sum(cur, 'replies'), prev: sum(prev, 'replies'), kind: 'int' },
+      { label: 'Shares', cur: sum(cur, 'shares'), prev: sum(prev, 'shares'), kind: 'int' },
+      { label: 'Stayed for slide 2', cur: stay(cur), prev: stay(prev), kind: 'pct' },
+    ];
+    $('kpis').innerHTML = tiles.map((t) => {
+      const show = (v) => v == null ? '–' : (t.kind === 'pct' ? Math.round(v * 100) + '%' : fmt.format(v));
+      let delta = '<span class="delta"><span class="prev">no earlier week yet</span></span>';
+      if (t.prev != null && t.cur != null && t.prev !== 0) {
+        const ch = (t.cur - t.prev) / t.prev;
+        const cls = ch > 0.005 ? 'up' : (ch < -0.005 ? 'down' : '');
+        const arrow = cls === 'up' ? '▲' : (cls === 'down' ? '▼' : '●');
+        delta = `<span class="delta ${cls}">${arrow} ${Math.abs(Math.round(ch * 100))}% <span class="prev">· was ${show(t.prev)}</span></span>`;
+      } else if (t.prev === 0 && t.cur) {
+        delta = `<span class="delta up">▲ new <span class="prev">· was 0</span></span>`;
+      }
+      return `<div class="kpi"><div class="label">${t.label}</div><div class="value">${show(t.cur)}</div>${delta}</div>`;
+    }).join('');
+  }
+
+  // ---- charts ----
+  const tip = $('tip');
+  function showTip(e, html) { tip.innerHTML = html; tip.hidden = false; moveTip(e); }
+  function moveTip(e) { const x = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8); const y = Math.min(e.clientY + 14, window.innerHeight - tip.offsetHeight - 8); tip.style.left = x + 'px'; tip.style.top = y + 'px'; }
+  function hideTip() { tip.hidden = true; }
+  function bindTips(root) {
+    root.querySelectorAll('[data-tip]').forEach((el) => {
+      el.addEventListener('mouseenter', (e) => showTip(e, el.dataset.tip));
+      el.addEventListener('mousemove', moveTip);
+      el.addEventListener('mouseleave', hideTip);
+    });
+  }
+  function bar(x, y0, w, h, fill, extra = '') {
+    if (h <= 0) return '';
+    const r = Math.min(4, w / 2, h);
+    const y = y0 - h;
+    return `<path d="M${x},${y0} V${y + r} Q${x},${y} ${x + r},${y} H${x + w - r} Q${x + w},${y} ${x + w},${y + r} V${y0} Z" fill="${fill}" ${extra}/>`;
+  }
+  function niceMax(v) { if (v <= 0) return 1; const p = Math.pow(10, Math.floor(Math.log10(v))); const n = v / p; const m = n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10; return m * p; }
+  function yTicks(max) { return [0, 0.25, 0.5, 0.75, 1].map((f) => f * max); }
+  const S1 = 'var(--series-1)', S2 = 'var(--series-2)', GHOST = 'var(--ghost)';
+
+  function chartWeekly(stories, metric, now) {
+    const el = $('chart-weekly');
+    const thisMon = mondayOf(now);
+    const weeks = [];
+    for (let i = 7; i >= 0; i--) { const start = new Date(thisMon.getTime() - i * 7 * DAY); weeks.push({ start, end: new Date(start.getTime() + 7 * DAY), rows: [] }); }
+    for (const s of stories) { const w = weeks.find((w) => s.postedAt >= w.start && s.postedAt < w.end); if (w) w.rows.push(s); }
+    const vals = weeks.map((w) => sum(w.rows, metric));
+    const head = `<h3>${METRIC_LABEL[metric]} by week</h3><p class="sub">Both slides added together. Current week is still filling up.</p>`;
+    if (!stories.length) { el.innerHTML = head + '<div class="empty">Nothing to compare yet.</div>'; return; }
+    const W = 520, H = 230, L = 44, R = 12, T = 18, B = 34, pw = W - L - R, ph = H - T - B;
+    const max = niceMax(Math.max(...vals, 1));
+    const slot = pw / weeks.length, bw = Math.min(40, slot * 0.6);
+    let g = '';
+    for (const t of yTicks(max)) { const y = T + ph - (t / max) * ph; g += `<g class="grid"><line x1="${L}" x2="${W - R}" y1="${y}" y2="${y}"/></g><g class="axis"><text x="${L - 8}" y="${y + 4}" text-anchor="end">${fmt.format(t)}</text></g>`; }
+    weeks.forEach((w, i) => {
+      const x = L + i * slot + (slot - bw) / 2, h = (vals[i] / max) * ph, isCur = i === weeks.length - 1, isPrev = i === weeks.length - 2;
+      const fill = isCur ? S1 : (isPrev ? 'var(--pink)' : GHOST);
+      const label = isCur ? 'This week' : (isPrev ? 'Last week' : fmtDate(w.start).replace(/^\w+,\s*/, ''));
+      const tipHtml = `<b>Week of ${fmtDate(w.start)}${isCur ? ' (so far)' : ''}</b><div class="row"><span>${METRIC_LABEL[metric]}</span><span>${fmt.format(vals[i])}</span></div><div class="row"><span>Stories</span><span>${w.rows.length}</span></div><div class="row"><span>Reach</span><span>${fmt.format(sum(w.rows, 'reach'))}</span></div>`;
+      g += bar(x, T + ph, bw, h, fill);
+      if (isCur || isPrev) g += `<text class="dl" x="${x + bw / 2}" y="${T + ph - h - 6}" text-anchor="middle">${fmt.format(vals[i])}</text>`;
+      g += `<g class="axis"><text x="${x + bw / 2}" y="${H - 12}" text-anchor="middle">${label}</text></g>`;
+      g += `<rect class="hit" x="${L + i * slot}" y="${T}" width="${slot}" height="${ph}" data-tip="${esc(tipHtml)}"/>`;
+    });
+    g += `<line class="baseline" x1="${L}" x2="${W - R}" y1="${T + ph}" y2="${T + ph}"/>`;
+    el.innerHTML = head + `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${METRIC_LABEL[metric]} per week for the last eight weeks">${g}</svg>`;
+    bindTips(el);
+  }
+
+  function chartSets(stories, metric) {
+    const el = $('chart-sets');
+    const head = `<h3>${METRIC_LABEL[metric]} by set</h3><p class="sub">Average per story, so a set that has posted more often isn’t flattered.</p>`;
+    if (!stories.length) { el.innerHTML = head + '<div class="empty">No sets have posted yet.</div>'; return; }
+    const rows = CONFIG.weekdaySets.map((set, i) => {
+      const day = stories.filter((s) => s.set === set && s.slot === 'day'), comp = stories.filter((s) => s.set === set && s.slot === 'companion');
+      return { set, dayName: DAYNAMES[i], a: avg(day, metric), b: avg(comp, metric), n: day.length };
+    });
+    const W = 520, H = 230, L = 96, R = 40, T = 8, B = 8, pw = W - L - R, ph = H - T - B;
+    const max = niceMax(Math.max(...rows.map((r) => Math.max(r.a || 0, r.b || 0)), 1));
+    const slot = ph / rows.length, bh = Math.min(9, slot * 0.32);
+    let g = '';
+    rows.forEach((r, i) => {
+      const y = T + i * slot + slot / 2;
+      const wa = ((r.a || 0) / max) * pw, wb = ((r.b || 0) / max) * pw;
+      g += `<g class="axis"><text x="${L - 10}" y="${y + 4}" text-anchor="end" style="font-weight:600;fill:var(--ink-2)">${r.set.replace('SET_', '')}</text><text x="${L - 10}" y="${y + 16}" text-anchor="end">${r.dayName}</text></g>`;
+      g += `<rect x="${L}" y="${y - bh - 1}" width="${wa}" height="${bh}" rx="3" fill="${S1}"/><rect x="${L}" y="${y + 1}" width="${wb}" height="${bh}" rx="3" fill="${S2}"/>`;
+      if (r.a != null) g += `<text class="dl" x="${L + wa + 6}" y="${y - 1}" font-size="10.5">${fmt.format(Math.round(r.a))}</text>`;
+      if (r.b != null) g += `<text class="dl" x="${L + wb + 6}" y="${y + bh + 1}" font-size="10.5" style="fill:var(--ink-3);font-weight:400">${fmt.format(Math.round(r.b))}</text>`;
+      const tipHtml = `<b>${r.set} · ${r.dayName}s</b><div class="row"><span>Day image avg</span><span>${r.a == null ? '–' : fmt.format(Math.round(r.a))}</span></div><div class="row"><span>Companion avg</span><span>${r.b == null ? '–' : fmt.format(Math.round(r.b))}</span></div><div class="row"><span>Times posted</span><span>${r.n}</span></div>`;
+      g += `<rect class="hit" x="0" y="${T + i * slot}" width="${W}" height="${slot}" data-tip="${esc(tipHtml)}"/>`;
+    });
+    g += `<line class="baseline" x1="${L}" x2="${L}" y1="${T}" y2="${T + ph}"/>`;
+    el.innerHTML = head + `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Average ${METRIC_LABEL[metric].toLowerCase()} per story for each weekday set">${g}</svg>`;
+    bindTips(el);
+  }
+
+  function chartStories(stories, metric, now) {
+    const el = $('chart-stories');
+    const since = now.getTime() - 28 * DAY;
+    const recent = stories.filter((s) => s.postedAt >= since);
+    const head = `<h3>${METRIC_LABEL[metric]} per story, last 4 weeks</h3><p class="sub">Slide 1 beside slide 2 for every posting day. Shaded bands are calendar weeks.</p>`;
+    if (!recent.length) { el.innerHTML = head + '<div class="empty">No stories in the last four weeks.</div>'; $('trend-note').textContent = ''; return; }
+    const days = [...new Set(recent.map((s) => s.date))].sort();
+    const W = 1080, H = 260, L = 44, R = 12, T = 18, B = 40, pw = W - L - R, ph = H - T - B;
+    const max = niceMax(Math.max(...recent.map((s) => s[metric] || 0), 1));
+    const slot = pw / days.length, bw = Math.min(22, slot * 0.34), gap = 2;
+    let g = '';
+    // week bands
+    const firstMon = mondayOf(utcDate(days[0]));
+    for (let k = 0, wStart = firstMon; wStart <= utcDate(days[days.length - 1]); wStart = new Date(wStart.getTime() + 7 * DAY), k++) {
+      const wEnd = new Date(wStart.getTime() + 7 * DAY);
+      const idxs = days.map((d, i) => [utcDate(d), i]).filter(([d]) => d >= wStart && d < wEnd).map(([, i]) => i);
+      if (!idxs.length || k % 2 === 0) continue;
+      const x0 = L + idxs[0] * slot, x1 = L + (idxs[idxs.length - 1] + 1) * slot;
+      g += `<rect class="weekband" x="${x0}" y="${T}" width="${x1 - x0}" height="${ph}"/>`;
+    }
+    for (const t of yTicks(max)) { const y = T + ph - (t / max) * ph; g += `<g class="grid"><line x1="${L}" x2="${W - R}" y1="${y}" y2="${y}"/></g><g class="axis"><text x="${L - 8}" y="${y + 4}" text-anchor="end">${fmt.format(t)}</text></g>`; }
+    days.forEach((d, i) => {
+      const dayS = recent.find((s) => s.date === d && s.slot === 'day'), compS = recent.find((s) => s.date === d && s.slot === 'companion');
+      const cx = L + i * slot + slot / 2;
+      const xa = cx - bw - gap / 2, xb = cx + gap / 2;
+      const ha = ((dayS && dayS[metric]) || 0) / max * ph, hb = ((compS && compS[metric]) || 0) / max * ph;
+      g += bar(xa, T + ph, bw, ha, S1) + bar(xb, T + ph, bw, hb, S2);
+      if (i === days.length - 1) { if (dayS && dayS[metric] != null) g += `<text class="dl" x="${xa + bw / 2}" y="${T + ph - ha - 6}" text-anchor="middle">${fmt.format(dayS[metric])}</text>`; if (compS && compS[metric] != null) g += `<text class="dl" x="${xb + bw / 2}" y="${T + ph - hb - 6}" text-anchor="middle">${fmt.format(compS[metric])}</text>`; }
+      const dd = utcDate(d);
+      g += `<g class="axis"><text x="${cx}" y="${H - 20}" text-anchor="middle">${dd.getUTCDate()} ${dd.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' })}</text><text x="${cx}" y="${H - 7}" text-anchor="middle" style="font-weight:600;fill:var(--ink-2)">${(dayS || compS).set.replace('SET_', '')}</text></g>`;
+      const line = (s, name) => s ? `<div class="row"><span>${name}</span><span>${s[metric] == null ? (s.missed ? 'missed' : 'pending') : fmt.format(s[metric])}</span></div>` : `<div class="row"><span>${name}</span><span>not posted</span></div>`;
+      const exit = dayS && dayS.exitRate != null ? `<div class="row"><span>Exit rate, slide 1</span><span>${Math.round(dayS.exitRate * 100)}%</span></div>` : '';
+      const tipHtml = `<b>${fmtDate(dd)} · ${(dayS || compS).set}</b>${line(dayS, 'Day image')}${line(compS, 'Companion')}${exit}`;
+      g += `<rect class="hit" x="${L + i * slot}" y="${T}" width="${slot}" height="${ph}" data-tip="${esc(tipHtml)}"/>`;
+    });
+    g += `<line class="baseline" x1="${L}" x2="${W - R}" y1="${T + ph}" y2="${T + ph}"/>`;
+    el.innerHTML = head + `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${METRIC_LABEL[metric]} for each story in the last four weeks">${g}</svg>`;
+    bindTips(el);
+    $('trend-note').textContent = `${recent.length} stories across ${days.length} posting days`;
+  }
+
+  // ---- table ----
+  function renderTable(stories) {
+    const rows = [...stories].reverse();
+    const cols = ['Posted', 'Set', 'Slide', 'Views', 'Reach', 'Replies', 'Shares', 'Profile visits', 'Follows', 'Exit rate', 'Tapped on', 'Tapped back'];
+    const cell = (v, pct) => v == null ? '<td class="muted">–</td>' : `<td>${pct ? Math.round(v * 100) + '%' : fmt.format(v)}</td>`;
+    const body = rows.map((s) => {
+      const state = s.collected ? '' : (s.missed ? ' <span class="muted">(missed)</span>' : ' <span class="muted">(pending)</span>');
+      return `<tr><td class="l">${fmtDate(s.day)} · ${s.postedAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</td><td class="l">${esc(s.set)}</td><td class="l"><span class="slide" style="background:${s.slot === 'day' ? S1 : S2}"></span>${s.slot === 'day' ? '1 · day image' : '2 · companion'}${state}</td>${cell(s.views)}${cell(s.reach)}${cell(s.replies)}${cell(s.shares)}${cell(s.profile_visits)}${cell(s.follows)}${cell(s.exitRate, true)}${cell(s.collected ? s.tap_next : null)}${cell(s.tap_back)}</tr>`;
+    }).join('');
+    $('table').innerHTML = `<thead><tr>${cols.map((c, i) => `<th class="${i < 3 ? 'l' : ''}">${c}</th>`).join('')}</tr></thead><tbody>${body || `<tr><td colspan="${cols.length}" class="l muted">No stories logged yet. The first row appears the moment the poster runs.</td></tr>`}</tbody>`;
+    $('register-note').textContent = rows.length ? `${rows.length} slides · newest first` : '';
+  }
+
+  // ---- boot ----
+  async function boot() {
+    const now = new Date();
+    $('eyebrow-date').textContent = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+    const data = await loadData();
+    if (data.sample) $('sample-banner').hidden = false;
+    const stories = buildStories(data.posts || [], data.insights || []);
+    let metric = 'views';
+    const draw = () => { chartWeekly(stories, metric, now); chartSets(stories, metric); chartStories(stories, metric, now); };
+    renderLedger(stories, now);
+    renderKpis(stories, now);
+    draw();
+    renderTable(stories);
+    renderHealth(data.status, stories, now);
+    $('metric-seg').addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-metric]'); if (!b) return;
+      metric = b.dataset.metric;
+      $('metric-seg').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      draw();
+    });
+    const lastCollect = data.status && data.status.last_collect_at ? fmtDateTime(new Date(data.status.last_collect_at)) : 'never';
+    $('foot').innerHTML = `Data lives in this repo: <a href="https://github.com/${CONFIG.owner}/${CONFIG.repo}/tree/main/data" target="_blank" rel="noopener">data/</a>. Posts are logged by the poster as they publish; numbers are collected daily at 15:30 UTC. Last collection: ${esc(lastCollect)}. Graph API ${esc((data.status && data.status.api_version) || '')}.`;
+  }
+  boot().catch((err) => { $('ledger').innerHTML = `<div class="ledger-row"><div class="when"><b>Couldn’t load</b></div><div class="what">${esc(err.message)}</div></div>`; console.error(err); });
+})();
+</script>
+</body>
+</html>

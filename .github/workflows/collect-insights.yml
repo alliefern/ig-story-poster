@@ -1,0 +1,50 @@
+name: Collect Story Insights
+
+on:
+  schedule:
+    # 15:30 UTC daily: half an hour before the next story posts, and ~23.5h after
+    # yesterday's. Meta only serves Story insights while the Story is live (24h),
+    # so this has to run before then or the numbers are gone.
+    - cron: "30 15 * * *"
+  workflow_dispatch: {}  # run it by hand from the Actions tab any time
+
+permissions:
+  contents: write  # so the run can commit data/insights.jsonl back to the repo
+
+concurrency:
+  group: story-data  # never let this and the poster commit at the same moment
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Collect insights
+        env:
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+        run: python collect_insights.py
+
+      - name: Save insights to the repo
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if git diff --staged --quiet; then
+            echo "Nothing new to save."
+            exit 0
+          fi
+          git commit -m "Record story insights for $(date -u +%Y-%m-%d)"
+          git pull --rebase origin main
+          git push origin HEAD:main
