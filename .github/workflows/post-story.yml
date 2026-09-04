@@ -41,7 +41,7 @@ jobs:
           IG_USER_ID: ${{ secrets.IG_USER_ID }}
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
           IMAGE_BASE_URL: ${{ secrets.IMAGE_BASE_URL }}
-          CYCLE_START_DATE: "2026-09-05"  # the date that counts as Day 1 of the loop
+          CYCLE_START_DATE: "2026-09-04"  # the date that counts as Day 1 of the loop
           CYCLE_DAY_OVERRIDE: ${{ inputs.cycle_day }}
         run: python post_story.py
 

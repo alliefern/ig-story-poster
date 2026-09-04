@@ -188,7 +188,7 @@ def post_image_to_story(
 
 def main() -> None:
     today = date.today()
-    start_date_str = os.environ.get("CYCLE_START_DATE", "2026-09-05")
+    start_date_str = os.environ.get("CYCLE_START_DATE", "2026-09-04")
 
     override = os.environ.get("CYCLE_DAY_OVERRIDE", "").strip()
     if override:
