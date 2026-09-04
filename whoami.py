@@ -7,6 +7,7 @@ Handles both Meta paths. On graph.facebook.com "me" is the Facebook user, so the
 Instagram account is reached via /me/accounts; on graph.instagram.com "me" is the
 Instagram account itself. Prints no secrets.
 """
+import json
 import os
 import sys
 
@@ -65,11 +66,18 @@ else:
         reachable.append(str(me.get("id")))
         print(f"  @{me.get('username')}  id {me.get('id')}")
 
-if configured_id:
-    if reachable and configured_id not in reachable:
-        print(f"\n  !! IG_USER_ID is {configured_id}, which is NOT in that list.")
-    elif reachable:
-        print(f"\n  IG_USER_ID {configured_id} is in that list.")
+# On the Instagram-login path "me" returns an app-scoped id that legitimately differs
+# from the Instagram Business account id used for publishing, so a difference there is
+# not a fault. On the Facebook path the ids should match.
+if configured_id and reachable:
+    if configured_id in reachable:
+        print(f"\n  IG_USER_ID {configured_id} matches.")
+    elif is_fb:
+        print(f"\n  !! IG_USER_ID is {configured_id}, which is NOT one the token can reach.")
+    else:
+        print(f"\n  IG_USER_ID is {configured_id}; 'me' reports the app-scoped id above. "
+              f"They differ by design on this path, so this is only a problem if "
+              f"publishing fails.")
 
 # --- what is live on the configured account's Story? ---
 if configured_id:
@@ -87,11 +95,19 @@ if configured_id:
             print(f"  {s.get('timestamp')}  {s.get('id')}  {s.get('media_type')}  {s.get('permalink', '')}")
 
 # --- the two things this repo published today ---
-print("\nThe media IDs this repo published today:")
-for mid in ("18226975915323318", "18111549383121622"):
+print("\nThe most recent slides in this repo's post log:")
+recent = []
+try:
+    with open(os.path.join(os.environ.get("DATA_DIR", "data"), "posts.jsonl"), encoding="utf-8") as f:
+        recent = [json.loads(line) for line in f if line.strip()][-6:]
+except FileNotFoundError:
+    print("  no post log yet")
+for row in recent:
+    mid = row["media_id"]
     m = get(mid, fields="id,media_type,media_product_type,timestamp,permalink,username")
+    label = f"{row['filename']} ({row['date']})"
     if "error" in m:
-        print(f"  {mid}: {err(m)}")
+        print(f"  {label}: {err(m)}")
     else:
-        print(f"  {mid}: {m.get('media_product_type')} / {m.get('media_type')} "
-              f"by @{m.get('username')} at {m.get('timestamp')}  {m.get('permalink', '')}")
+        print(f"  {label}: {m.get('media_product_type')} / {m.get('media_type')} "
+              f"by @{m.get('username')}  {m.get('permalink', '')}")
