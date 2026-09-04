@@ -42,8 +42,8 @@ Env vars required (set as GitHub repo secrets, see README):
   IMAGE_BASE_URL   - public base URL where images/ is served from
                       e.g. https://raw.githubusercontent.com/<you>/<repo>/main/images
 Optional:
-  GRAPH_HOST         - graph.instagram.com (Instagram login, the default) or
-                       graph.facebook.com (Facebook login). See GRAPH_HOST below.
+  GRAPH_HOST         - "auto" (default) picks the right Meta host from the token's
+                       own prefix. Force it with graph.instagram.com or graph.facebook.com.
   GRAPH_API_VERSION  - defaults to v21.0.
   CYCLE_START_DATE   - YYYY-MM-DD that counts as Day 1. Defaults to 2026-09-05.
   CYCLE_DAY_OVERRIDE - 1 to 12. Post that day's slides regardless of the date. For testing.
@@ -69,8 +69,19 @@ GRAPH_API_VERSION = os.environ.get("GRAPH_API_VERSION", "v21.0")
 # Which one you need depends on how the Meta app's use case was set up. Getting it
 # wrong produces a confusing permission error naming a scope your app cannot have,
 # so it is an env var rather than something to go editing in here.
-GRAPH_HOST = os.environ.get("GRAPH_HOST", "graph.instagram.com")
-GRAPH_BASE = f"https://{GRAPH_HOST}/{GRAPH_API_VERSION}"
+# Tokens are self-identifying: Instagram-login tokens start "IGAA", Facebook-login
+# tokens start "EAA". Each host only accepts its own kind, and sending one to the
+# other gets you "Cannot parse access token", which reads like a corrupted paste
+# rather than a mismatch. So work it out from the token instead of guessing. Set
+# GRAPH_HOST to a hostname to override.
+GRAPH_HOST = os.environ.get("GRAPH_HOST", "auto").strip() or "auto"
+
+
+def graph_base(access_token: str) -> str:
+    host = GRAPH_HOST
+    if host == "auto":
+        host = "graph.instagram.com" if access_token.startswith("IGAA") else "graph.facebook.com"
+    return f"https://{host}/{GRAPH_API_VERSION}"
 DATA_DIR = os.environ.get("DATA_DIR", "data")
 
 CYCLE_LENGTH_DAYS = 12
@@ -106,10 +117,15 @@ def cycle_day(start_date_str: str, today: date) -> int | None:
 
 
 def require_env(name: str) -> str:
-    value = os.environ.get(name)
-    if not value:
+    raw = os.environ.get(name)
+    if not raw or not raw.strip():
         print(f"ERROR: missing required env var {name}", file=sys.stderr)
         sys.exit(1)
+    # A stray newline or space pasted into a GitHub secret is invisible in the UI and
+    # makes Meta reject the whole request as unparseable, so trim rather than trust.
+    value = raw.strip()
+    if value != raw:
+        print(f"note: trimmed whitespace from {name}")
     return value
 
 
@@ -137,7 +153,7 @@ def check(resp, what: str):
 
 def create_story_container(ig_user_id: str, access_token: str, image_url: str) -> str:
     resp = requests.post(
-        f"{GRAPH_BASE}/{ig_user_id}/media",
+        f"{graph_base(access_token)}/{ig_user_id}/media",
         data={
             "image_url": image_url,
             "media_type": "STORIES",
@@ -156,7 +172,7 @@ def wait_until_ready(container_id: str, access_token: str, max_wait_seconds: int
     interval = 3
     while waited < max_wait_seconds:
         resp = requests.get(
-            f"{GRAPH_BASE}/{container_id}",
+            f"{graph_base(access_token)}/{container_id}",
             params={"fields": "status_code", "access_token": access_token},
             timeout=30,
         )
@@ -175,7 +191,7 @@ def wait_until_ready(container_id: str, access_token: str, max_wait_seconds: int
 
 def publish_container(ig_user_id: str, access_token: str, container_id: str) -> str:
     resp = requests.post(
-        f"{GRAPH_BASE}/{ig_user_id}/media_publish",
+        f"{graph_base(access_token)}/{ig_user_id}/media_publish",
         data={
             "creation_id": container_id,
             "access_token": access_token,
@@ -247,7 +263,8 @@ def main() -> None:
     group, slides = CYCLE[day - 1]
     print(f"{today.isoformat()} is Day {day} of {CYCLE_LENGTH_DAYS} ({group}). "
           f"Posting {len(slides)} slide(s): {', '.join(slides)}.")
-    print(f"Using {GRAPH_BASE} for account {ig_user_id}.")
+    print(f"Using {graph_base(access_token)} for account {ig_user_id} "
+          f"(token starts {access_token[:4]}...).")
 
     for index, slide in enumerate(slides, start=1):
         filename = f"{slide}.jpg"

@@ -33,7 +33,7 @@ from datetime import datetime, timedelta, timezone
 
 import requests
 
-from post_story import GRAPH_API_VERSION, GRAPH_BASE, require_env
+from post_story import GRAPH_API_VERSION, graph_base, require_env
 
 DATA_DIR = os.environ.get("DATA_DIR", "data")
 POSTS_PATH = os.path.join(DATA_DIR, "posts.jsonl")
@@ -112,7 +112,7 @@ def parse_breakdown(item: dict) -> dict:
 def fetch_story_metrics(media_id: str, token: str) -> tuple[dict, list]:
     metrics: dict = {}
     errors: list = []
-    url = f"{GRAPH_BASE}/{media_id}/insights"
+    url = f"{graph_base(token)}/{media_id}/insights"
 
     body = graph_get(url, {"metric": ",".join(STORY_METRICS), "metric_type": "total_value", "access_token": token})
     if "error" in body:
@@ -149,7 +149,7 @@ def fetch_story_metrics(media_id: str, token: str) -> tuple[dict, list]:
 def check_token(token: str) -> dict:
     """Best effort: ask Meta when this token expires. Works when the token belongs to a
     developer of the app (which is you). If Meta refuses, we simply don't know."""
-    body = graph_get(f"https://graph.facebook.com/{GRAPH_API_VERSION}/debug_token",
+    body = graph_get(f"{graph_base(token)}/debug_token",
                      {"input_token": token, "access_token": token})
     data = body.get("data") if isinstance(body.get("data"), dict) else None
     if not data:

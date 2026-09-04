@@ -41,9 +41,6 @@ jobs:
           IG_USER_ID: ${{ secrets.IG_USER_ID }}
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
           IMAGE_BASE_URL: ${{ secrets.IMAGE_BASE_URL }}
-          # Instagram login path (instagram_business_* scopes). Change to
-          # graph.facebook.com if the Meta app is set up for Facebook login instead.
-          GRAPH_HOST: "graph.instagram.com"
           CYCLE_START_DATE: "2026-09-04"  # the date that counts as Day 1 of the loop
           CYCLE_DAY_OVERRIDE: ${{ inputs.cycle_day }}
         run: python post_story.py
