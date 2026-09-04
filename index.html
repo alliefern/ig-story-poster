@@ -120,8 +120,13 @@
     -webkit-mask: repeating-conic-gradient(#000 0 25%, transparent 0 50%) 0 0 / 34px 34px, linear-gradient(200deg, #000 30%, transparent 78%);
     -webkit-mask-composite: source-in; mask-composite: intersect;
     mask: repeating-conic-gradient(#000 0 25%, transparent 0 50%) 0 0 / 34px 34px, linear-gradient(200deg, #000 30%, transparent 78%);
-    pointer-events: none; opacity: .95;
+    pointer-events: none; opacity: .95; z-index: 0;
   }
+  /* Keep the wordmark and copy in front of the holographic panel. */
+  .masthead .eyebrow,
+  .masthead h1,
+  .masthead p.lede,
+  .masthead .sample-banner { position: relative; z-index: 1; }
   :root[data-theme="dark"] .holo-checker { opacity: .8; }
   @media (max-width: 720px) { .holo-checker { width: 220px; height: 170px; right: -50px; } }
 
