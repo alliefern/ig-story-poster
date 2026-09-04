@@ -42,6 +42,9 @@ Env vars required (set as GitHub repo secrets, see README):
   IMAGE_BASE_URL   - public base URL where images/ is served from
                       e.g. https://raw.githubusercontent.com/<you>/<repo>/main/images
 Optional:
+  GRAPH_HOST         - graph.instagram.com (Instagram login, the default) or
+                       graph.facebook.com (Facebook login). See GRAPH_HOST below.
+  GRAPH_API_VERSION  - defaults to v21.0.
   CYCLE_START_DATE   - YYYY-MM-DD that counts as Day 1. Defaults to 2026-09-05.
   CYCLE_DAY_OVERRIDE - 1 to 12. Post that day's slides regardless of the date. For testing.
   DATA_DIR           - where to write the post log (default: data/). Each published slide
@@ -56,8 +59,18 @@ import time
 from datetime import date, datetime, timezone
 import requests
 
-GRAPH_API_VERSION = "v21.0"
-GRAPH_BASE = f"https://graph.facebook.com/{GRAPH_API_VERSION}"
+GRAPH_API_VERSION = os.environ.get("GRAPH_API_VERSION", "v21.0")
+
+# Meta has two Instagram publishing paths and they use different hosts:
+#   graph.instagram.com  - "Instagram API with Instagram login". Scopes are named
+#                          instagram_business_*, and no Facebook Page is involved.
+#   graph.facebook.com   - "Instagram API with Facebook login". Scopes are named
+#                          instagram_basic, instagram_content_publish, pages_*.
+# Which one you need depends on how the Meta app's use case was set up. Getting it
+# wrong produces a confusing permission error naming a scope your app cannot have,
+# so it is an env var rather than something to go editing in here.
+GRAPH_HOST = os.environ.get("GRAPH_HOST", "graph.instagram.com")
+GRAPH_BASE = f"https://{GRAPH_HOST}/{GRAPH_API_VERSION}"
 DATA_DIR = os.environ.get("DATA_DIR", "data")
 
 CYCLE_LENGTH_DAYS = 12
@@ -234,6 +247,7 @@ def main() -> None:
     group, slides = CYCLE[day - 1]
     print(f"{today.isoformat()} is Day {day} of {CYCLE_LENGTH_DAYS} ({group}). "
           f"Posting {len(slides)} slide(s): {', '.join(slides)}.")
+    print(f"Using {GRAPH_BASE} for account {ig_user_id}.")
 
     for index, slide in enumerate(slides, start=1):
         filename = f"{slide}.jpg"
