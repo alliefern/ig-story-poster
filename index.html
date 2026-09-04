@@ -145,7 +145,7 @@
   .ledger-row .when span { font-size: 12px; color: var(--ink-3); letter-spacing: .06em; text-transform: uppercase; }
   .ledger-row .what { display: flex; align-items: center; gap: 10px; min-width: 0; }
   .thumbs { display: flex; gap: 5px; flex-shrink: 0; }
-  .thumb { width: 34px; height: 58px; border-radius: 6px; overflow: hidden; background: var(--blush); border: 1px solid var(--line-2); display: grid; place-items: center; text-align: center; padding: 2px; font-size: 8.5px; line-height: 1.1; letter-spacing: .02em; color: var(--ink-3); font-weight: 600; overflow-wrap: anywhere; }
+  .thumb { width: 34px; height: 58px; border-radius: 6px; overflow: hidden; background: var(--blush); border: 1px solid var(--line-2); display: grid; place-items: center; text-align: center; padding: 2px; font-size: 10px; line-height: 1.1; letter-spacing: .02em; color: var(--ink-3); font-weight: 600; overflow-wrap: anywhere; }
   .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .what .set { font-weight: 600; }
   .what .files { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
@@ -313,7 +313,9 @@
   const DAYNAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const METRIC_LABEL = { views: 'Views', reach: 'Reach', replies: 'Replies', shares: 'Shares' };
   const GROUP_LABEL = { QUIZ: 'Quiz, 4 slides', QUIZ_STANDALONE: 'Standalone quiz' };
-  const GROUP_SHORT = { SET_ONE: 'S1', SET_TWO: 'S2', SET_THREE: 'S3', SET_FOUR: 'S4', SET_FIVE: 'S5', SET_SIX: 'S6', QUIZ: 'Q4', QUIZ_STANDALONE: 'Q1' };
+  const GROUP_SHORT = { SET_ONE: 'S1', SET_TWO: 'S2', SET_THREE: 'S3', SET_FOUR: 'S4', SET_FIVE: 'S5', SET_SIX: 'S6', QUIZ: 'Q4', QUIZ_STANDALONE: 'QS' };
+  const SLIDE_SHORT = { SET_ONE: '1', SET_TWO: '2', SET_THREE: '3', SET_FOUR: '4', SET_FIVE: '5', SET_SIX: '6', QUIZ_ONE: 'Q1', QUIZ_TWO: 'Q2', QUIZ_THREE: 'Q3', QUIZ_FOUR: 'Q4', QUIZ_STANDALONE: 'QS' };
+  const slideShort = (file) => { const n = file.replace('.jpg', ''); return SLIDE_SHORT[n] || (n.endsWith('_A') ? (SLIDE_SHORT[n.slice(0, -2)] || n) + 'A' : n); };
   const groupLabel = (g) => GROUP_LABEL[g] || g.replace('SET_', 'Set ').replace(/\b(\w)(\w+)/g, (m, a, b) => a + b.toLowerCase());
   const groupShort = (g) => GROUP_SHORT[g] || g;
   const fmt = new Intl.NumberFormat('en-GB');
@@ -403,7 +405,7 @@
       found++;
     }
     rows.sort((a, b) => a.date - b.date);
-    const thumb = (file) => `<div class="thumb"><img src="images/${file}" alt="" loading="lazy" onerror="this.parentNode.textContent='${file.replace('.jpg', '').replace('SET_', '').replace('QUIZ_', 'Q ').replace('_A', ' A')}'"></div>`;
+    const thumb = (file) => `<div class="thumb"><img src="images/${file}" alt="" loading="lazy" onerror="this.parentNode.textContent='${slideShort(file)}'"></div>`;
     $('ledger').innerHTML = rows.map((r) => {
       const isToday = isoDay(r.date) === isoDay(today);
       let pill, group, slides, timeText = '';
@@ -592,7 +594,7 @@
     const el = $('chart-stories');
     const since = now.getTime() - 28 * DAY;
     const recent = days.filter((d) => d.slides[0].postedAt >= since);
-    const head = `<h3>${METRIC_LABEL[metric]} per day, last 4 weeks</h3><p class="sub">First slide beside last slide for every posting day. S1 to S6 are the sets, Q4 the four-slide quiz, Q1 the standalone. Shaded bands are calendar weeks.</p>`;
+    const head = `<h3>${METRIC_LABEL[metric]} per day, last 4 weeks</h3><p class="sub">First slide beside last slide for every posting day. S1 to S6 are the sets, Q4 the four-slide quiz, QS the standalone. Shaded bands are calendar weeks.</p>`;
     if (!recent.length) { el.innerHTML = head + '<div class="empty">No stories in the last four weeks.</div>'; $('trend-note').textContent = ''; return; }
     const W = 1080, H = 260, L = 44, R = 12, T = 18, B = 40, pw = W - L - R, ph = H - T - B;
     const max = niceMax(Math.max(...recent.flatMap((d) => d.slides.map((s) => s[metric] || 0)), 1));
