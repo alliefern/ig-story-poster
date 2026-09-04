@@ -24,6 +24,11 @@ Env vars
   IG_ACCESS_TOKEN   - required, the same long-lived token post_story.py uses
   DATA_DIR          - default "data"
   LOOKBACK_HOURS    - default 24. Collect for posts newer than this.
+  TOKEN_ISSUED      - YYYY-MM-DD the current token was generated. Meta refuses
+                      debug_token on the Instagram-login path, so this is how the
+                      dashboard knows when to start warning. Update it when you
+                      refresh the token.
+  TOKEN_LIFETIME_DAYS - default 60.
 """
 
 import json
@@ -224,6 +229,19 @@ def main() -> None:
         "token_checked_at": now.isoformat(timespec="seconds"),
     }
     status.update(check_token(token))
+
+    # If Meta would not tell us the expiry, fall back to counting from the date the
+    # token was issued, so the dashboard can still show a countdown rather than a shrug.
+    issued = os.environ.get("TOKEN_ISSUED", "").strip()
+    if issued and not status.get("token_expires_at"):
+        lifetime = int(os.environ.get("TOKEN_LIFETIME_DAYS", "60"))
+        issued_at = datetime.strptime(issued, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        expires_at = issued_at + timedelta(days=lifetime)
+        status["token_issued"] = issued
+        status["token_expires_at"] = int(expires_at.timestamp())
+        status["token_expiry_is_estimated"] = True
+        print(f"Meta would not report an expiry; estimating {expires_at.date()} "
+              f"({lifetime} days from {issued}).")
     os.makedirs(DATA_DIR, exist_ok=True)
     with open(STATUS_PATH, "w", encoding="utf-8") as f:
         json.dump(status, f, indent=2)

@@ -33,6 +33,9 @@ jobs:
       - name: Collect insights
         env:
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          # Meta refuses debug_token on the Instagram-login path, so the dashboard
+          # counts down from here instead. Update this when you refresh the token.
+          TOKEN_ISSUED: "2026-09-04"
         run: python collect_insights.py
 
       - name: Save insights to the repo

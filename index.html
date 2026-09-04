@@ -465,7 +465,8 @@
       const daysLeft = Math.floor((exp - now) / DAY);
       const cls = daysLeft <= 3 ? 'bad' : (daysLeft <= CONFIG.tokenWarnDays ? 'warn' : '');
       const pct = Math.max(0, Math.min(100, (daysLeft / 60) * 100));
-      rows.push({ k: 'Meta token', v: daysLeft < 0 ? 'Expired' : `${daysLeft} days left`, sub: `expires ${fmtDay(exp)} · refresh + update the secret`, cls: daysLeft < 0 ? 'bad' : cls });
+      const est = status.token_expiry_is_estimated ? 'about ' : '';
+      rows.push({ k: 'Meta token', v: daysLeft < 0 ? 'Expired' : `${est}${daysLeft} days left`, sub: `${est ? 'estimated expiry' : 'expires'} ${fmtDay(exp)} · refresh + update the secret`, cls: daysLeft < 0 ? 'bad' : cls });
       tokenHtml = `<div class="token-bar ${cls}"><i style="width:${pct}%"></i></div>`;
     } else if (status && status.token_is_valid === false) {
       rows.push({ k: 'Meta token', v: 'Invalid', sub: 'refresh it and update IG_ACCESS_TOKEN', cls: 'bad' });
