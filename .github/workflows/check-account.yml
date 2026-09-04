@@ -1,0 +1,21 @@
+name: Check Instagram account
+
+# Diagnostic only. Run it by hand from the Actions tab when a post says it
+# succeeded but nothing shows up in the Instagram app. Posts nothing.
+on:
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: Ask Meta which account this token controls
+        env:
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+        run: python whoami.py
