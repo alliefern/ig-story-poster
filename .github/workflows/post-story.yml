@@ -4,10 +4,15 @@ on:
   schedule:
     # Runs every day at 16:00 UTC (~5pm UK time in winter, 4pm in summer since
     # GitHub Actions cron doesn't adjust for daylight saving). Edit the minute/hour
-    # below to change the time. The script itself decides whether today is actually
-    # a "posting day" — this just controls what time it checks.
+    # below to change the time. The script works out which day of the 12-day loop
+    # it is and posts that day's slides.
     - cron: "0 16 * * *"
-  workflow_dispatch: {}  # lets you trigger a run manually from the Actions tab, for testing
+  workflow_dispatch:  # run it by hand from the Actions tab, for testing
+    inputs:
+      cycle_day:
+        description: "Post a specific day of the loop (1-12) instead of today's. Leave blank for today's."
+        required: false
+        default: ""
 
 permissions:
   contents: write  # so the run can commit data/posts.jsonl back to the repo
@@ -36,7 +41,8 @@ jobs:
           IG_USER_ID: ${{ secrets.IG_USER_ID }}
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
           IMAGE_BASE_URL: ${{ secrets.IMAGE_BASE_URL }}
-          REFERENCE_DATE: "2026-09-01"
+          CYCLE_START_DATE: "2026-09-05"  # the date that counts as Day 1 of the loop
+          CYCLE_DAY_OVERRIDE: ${{ inputs.cycle_day }}
         run: python post_story.py
 
       - name: Save post log to the repo

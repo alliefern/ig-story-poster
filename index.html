@@ -138,13 +138,13 @@
   .live-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); gap: 18px; }
   @media (max-width: 860px) { .live-grid { grid-template-columns: 1fr; } }
   .ledger { border-top: 1px solid var(--line-2); }
-  .ledger-row { display: grid; grid-template-columns: 118px 1fr auto; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .ledger-row { display: grid; grid-template-columns: 104px 1fr auto; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line); }
   .ledger-row.today { background: linear-gradient(90deg, var(--panel-2), transparent); margin: 0 -10px; padding-left: 10px; padding-right: 10px; border-radius: 8px; }
   .ledger-row .when { font-variant-numeric: tabular-nums; }
   .ledger-row .when b { display: block; font-family: var(--font-display); font-weight: 700; font-size: 17px; line-height: 1.15; }
   .ledger-row .when span { font-size: 12px; color: var(--ink-3); letter-spacing: .06em; text-transform: uppercase; }
   .ledger-row .what { display: flex; align-items: center; gap: 10px; min-width: 0; }
-  .thumbs { display: flex; gap: 6px; }
+  .thumbs { display: flex; gap: 5px; flex-shrink: 0; }
   .thumb { width: 34px; height: 58px; border-radius: 6px; overflow: hidden; background: var(--blush); border: 1px solid var(--line-2); display: grid; place-items: center; text-align: center; padding: 2px; font-size: 8.5px; line-height: 1.1; letter-spacing: .02em; color: var(--ink-3); font-weight: 600; overflow-wrap: anywhere; }
   .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .what .set { font-weight: 600; }
@@ -231,7 +231,7 @@
     <div class="holo-checker" aria-hidden="true"></div>
     <div class="eyebrow"><span>Allie Fern</span><span>Instagram Stories</span><span id="eyebrow-date"></span></div>
     <h1>Story <span class="thin">Register</span></h1>
-    <p class="lede">What the auto-poster put live, when, and how each story did. Numbers are collected once, just before Meta deletes them at the 24-hour mark, so every story here is near-final.</p>
+    <p class="lede">What the auto-poster put live, when, and how each story did. It posts every day on a 12-day loop of sets and quizzes. Numbers are collected once, just before Meta deletes them at the 24-hour mark, so every story here is near-final.</p>
     <div id="sample-banner" class="sample-banner" hidden><strong>Sample data.</strong> These numbers are invented to show the layout. Real ones appear here once the first story posts and the collector runs the next afternoon.</div>
   </header>
 
@@ -249,7 +249,7 @@
   <section id="pulse">
     <div class="sec-head"><h2>Last 7 days</h2><span class="note">totals, against the 7 days before</span></div>
     <div class="kpis" id="kpis"></div>
-    <p class="kpi-foot">Any 7-day window holds 3 or 4 posting days, never the same twice running, so glance at the story count before reading a swing as real. Meta's API returns counts, not people. Who replied is in your DMs; who viewed is in the app's viewer list for the 24 hours the story is up, and nowhere after that.</p>
+    <p class="kpi-foot">Views and reach are added across every slide, and a week holds between 14 and 17 slides depending on where the loop falls, so glance at the slide count before reading a swing as real. Meta's API returns counts, not people. Who replied is in your DMs; who viewed is in the app's viewer list for the 24 hours the story is up, and nowhere after that.</p>
   </section>
 
   <section id="charts-sec">
@@ -261,7 +261,7 @@
         <button type="button" data-metric="replies" aria-pressed="false">Replies</button>
         <button type="button" data-metric="shares" aria-pressed="false">Shares</button>
       </div>
-      <div class="legend"><span><i style="background:var(--series-1)"></i>Day image (slide 1)</span><span><i style="background:var(--series-2)"></i>Companion (slide 2)</span></div>
+      <div class="legend"><span><i style="background:var(--series-1)"></i>First slide</span><span><i style="background:var(--series-2)"></i>Last slide</span></div>
     </div>
     <div class="charts">
       <div class="chart" id="chart-weekly"></div>
@@ -287,25 +287,46 @@
   const CONFIG = {
     owner: 'alliefern',
     repo: 'ig-story-poster',
-    referenceDate: '2026-09-01',     // same value as REFERENCE_DATE in post-story.yml
+    cycleStartDate: '2026-09-05',    // same value as CYCLE_START_DATE in post-story.yml (Day 1)
     postHourUTC: 16,                 // the cron hour in post-story.yml
-    weekdaySets: ['SET_ONE', 'SET_TWO', 'SET_THREE', 'SET_FOUR', 'SET_FIVE', 'SET_SIX', 'SET_SEVEN'], // Mon..Sun
     tokenWarnDays: 14,
+    // same order as CYCLE in post_story.py
+    cycle: [
+      { group: 'SET_ONE', slides: ['SET_ONE', 'SET_ONE_A'] },
+      { group: 'QUIZ', slides: ['QUIZ_ONE', 'QUIZ_TWO', 'QUIZ_THREE', 'QUIZ_FOUR'] },
+      { group: 'SET_TWO', slides: ['SET_TWO', 'SET_TWO_A'] },
+      { group: 'QUIZ_STANDALONE', slides: ['QUIZ_STANDALONE'] },
+      { group: 'SET_THREE', slides: ['SET_THREE', 'SET_THREE_A'] },
+      { group: 'QUIZ', slides: ['QUIZ_ONE', 'QUIZ_TWO', 'QUIZ_THREE', 'QUIZ_FOUR'] },
+      { group: 'SET_FOUR', slides: ['SET_FOUR', 'SET_FOUR_A'] },
+      { group: 'QUIZ_STANDALONE', slides: ['QUIZ_STANDALONE'] },
+      { group: 'SET_FIVE', slides: ['SET_FIVE', 'SET_FIVE_A'] },
+      { group: 'QUIZ', slides: ['QUIZ_ONE', 'QUIZ_TWO', 'QUIZ_THREE', 'QUIZ_FOUR'] },
+      { group: 'SET_SIX', slides: ['SET_SIX', 'SET_SIX_A'] },
+      { group: 'QUIZ_STANDALONE', slides: ['QUIZ_STANDALONE'] },
+    ],
   };
+  if (window.__STORY_DATA__ && window.__STORY_DATA__.config) Object.assign(CONFIG, window.__STORY_DATA__.config);
+
   const RAW_BASE = `https://raw.githubusercontent.com/${CONFIG.owner}/${CONFIG.repo}/main/`;
   const DAY = 86400000;
   const DAYNAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const METRIC_LABEL = { views: 'Views', reach: 'Reach', replies: 'Replies', shares: 'Shares' };
+  const GROUP_LABEL = { QUIZ: 'Quiz, 4 slides', QUIZ_STANDALONE: 'Standalone quiz' };
+  const GROUP_SHORT = { SET_ONE: 'S1', SET_TWO: 'S2', SET_THREE: 'S3', SET_FOUR: 'S4', SET_FIVE: 'S5', SET_SIX: 'S6', QUIZ: 'Q4', QUIZ_STANDALONE: 'Q1' };
+  const groupLabel = (g) => GROUP_LABEL[g] || g.replace('SET_', 'Set ').replace(/\b(\w)(\w+)/g, (m, a, b) => a + b.toLowerCase());
+  const groupShort = (g) => GROUP_SHORT[g] || g;
   const fmt = new Intl.NumberFormat('en-GB');
   const fmtDate = (d) => d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const fmtDay = (d) => fmtDate(d).replace(/^\w+,\s*/, '');
+  const fmtTime = (d) => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   const fmtDateTime = (d) => d.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   const utcDate = (iso) => new Date(iso + 'T00:00:00Z');
   const isoDay = (d) => d.toISOString().slice(0, 10);
   const mondayOf = (d) => { const x = new Date(d); const wd = (x.getUTCDay() + 6) % 7; x.setUTCDate(x.getUTCDate() - wd); x.setUTCHours(0, 0, 0, 0); return x; };
   const weekdayIndex = (d) => (d.getUTCDay() + 6) % 7;
-  const isPostingDay = (d) => Math.round((d - utcDate(CONFIG.referenceDate)) / DAY) % 2 === 0;
-  const setForDate = (d) => CONFIG.weekdaySets[weekdayIndex(d)];
-  const setLabel = (s) => { const i = CONFIG.weekdaySets.indexOf(s); return i < 0 ? s : `${s} · ${DAYNAMES[i]}`; };
+  const cycleDay = (d) => { const n = Math.round((d - utcDate(CONFIG.cycleStartDate)) / DAY); return n < 0 ? null : (n % CONFIG.cycle.length) + 1; };
+  const planFor = (d) => { const n = cycleDay(d); return n ? { day: n, ...CONFIG.cycle[n - 1] } : null; };
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const $ = (id) => document.getElementById(id);
 
@@ -343,11 +364,12 @@
         ...p,
         postedAt: new Date(p.posted_at),
         day: utcDate(p.date),
+        isFirst: p.slide === 1,
+        isLast: p.slide === p.slides_total,
         collected: !!(ins && ins.metrics && Object.keys(ins.metrics).length),
         missed: !!(ins && ins.errors && ins.errors.some((e) => /expired/.test(e))),
         views, reach: m.reach ?? null, replies: m.replies ?? null, shares: m.shares ?? null,
         profile_visits: m.profile_visits ?? null, follows: m.follows ?? null,
-        total_interactions: m.total_interactions ?? null,
         tap_exit: nav.tap_exit ?? null, tap_back: nav.tap_back ?? null,
         tap_next: (nav.tap_forward ?? 0) + (nav.swipe_forward ?? 0),
         exitRate: views ? (nav.tap_exit ?? 0) / views : null,
@@ -356,54 +378,62 @@
   }
   const sum = (arr, k) => arr.reduce((t, s) => t + (s[k] || 0), 0);
   const avg = (arr, k) => { const v = arr.filter((s) => s[k] != null); return v.length ? sum(v, k) / v.length : null; };
+  // posting days: one entry per date, slides in order
+  function groupDays(stories) {
+    const map = new Map();
+    for (const s of stories) { if (!map.has(s.date)) map.set(s.date, { date: s.date, day: s.day, group: s.group, slides: [] }); map.get(s.date).slides.push(s); }
+    for (const d of map.values()) d.slides.sort((a, b) => a.slide - b.slide);
+    return [...map.values()].sort((a, b) => a.day - b.day);
+  }
+  const firstOf = (d) => d.slides.find((s) => s.slide === 1) || d.slides[0];
+  const lastOf = (d) => d.slides.find((s) => s.isLast) || d.slides[d.slides.length - 1];
 
   // ---- going live ----
-  function renderLedger(stories, now) {
+  function renderLedger(days, now) {
     const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-    const byDate = new Map();
-    for (const s of stories) { if (!byDate.has(s.date)) byDate.set(s.date, []); byDate.get(s.date).push(s); }
+    const byDate = new Map(days.map((d) => [d.date, d]));
     const rows = [];
-    // last two posting days that actually happened
-    const pastDates = [...byDate.keys()].sort().slice(-2);
-    for (const d of pastDates) rows.push({ date: utcDate(d), kind: 'past', stories: byDate.get(d) });
-    // upcoming posting days, today included
+    for (const d of days.slice(-2)) rows.push({ date: d.day, kind: 'past', posted: d });
+    const start = utcDate(CONFIG.cycleStartDate);
     for (let i = 0, found = 0; found < 5 && i < 14; i++) {
       const d = new Date(today.getTime() + i * DAY);
-      if (!isPostingDay(d)) continue;
       if (i === 0 && byDate.has(isoDay(d))) continue;
-      rows.push({ date: d, kind: i === 0 ? 'today' : 'next', stories: [] });
+      if (d < start) { if (i === 0) rows.push({ date: d, kind: 'notyet' }); continue; }
+      rows.push({ date: d, kind: i === 0 ? 'today' : 'next' });
       found++;
     }
     rows.sort((a, b) => a.date - b.date);
+    const thumb = (file) => `<div class="thumb"><img src="images/${file}" alt="" loading="lazy" onerror="this.parentNode.textContent='${file.replace('.jpg', '').replace('SET_', '').replace('QUIZ_', 'Q ').replace('_A', ' A')}'"></div>`;
     $('ledger').innerHTML = rows.map((r) => {
-      const set = setForDate(r.date);
       const isToday = isoDay(r.date) === isoDay(today);
-      let pill;
+      let pill, group, slides, timeText = '';
+      if (r.kind === 'notyet') {
+        return `<div class="ledger-row today"><div class="when"><b>Today</b><span>${DAYNAMES[weekdayIndex(r.date)]}</span></div><div class="what"><div><div class="set">Loop starts ${fmtDay(start)}</div><div class="files">Day 1 is ${esc(CONFIG.cycle[0].group)}</div></div></div><span class="status-pill"><i class="dot"></i>Not started</span></div>`;
+      }
       if (r.kind === 'past') {
-        const posted = r.stories.length;
-        const collected = r.stories.filter((s) => s.collected).length;
-        const missed = r.stories.some((s) => s.missed);
-        if (posted < 2) pill = `<span class="status-pill warn"><i class="dot"></i>${posted} of 2 slides posted</span>`;
+        group = r.posted.group; slides = r.posted.slides.map((s) => s.filename); timeText = ' · ' + fmtTime(r.posted.slides[0].postedAt);
+        const total = r.posted.slides[0].slides_total || slides.length, posted = slides.length;
+        const collected = r.posted.slides.filter((s) => s.collected).length, missed = r.posted.slides.some((s) => s.missed);
+        if (posted < total) pill = `<span class="status-pill warn"><i class="dot"></i>${posted} of ${total} slides posted</span>`;
         else if (collected === posted) pill = `<span class="status-pill good"><i class="dot"></i>Posted · numbers in</span>`;
         else if (missed) pill = `<span class="status-pill warn"><i class="dot"></i>Posted · numbers missed</span>`;
-        else pill = `<span class="status-pill good"><i class="dot"></i>Posted · numbers due ${fmtDate(new Date(r.date.getTime() + DAY))}</span>`;
-      } else if (r.kind === 'today') {
-        const due = new Date(r.date); due.setUTCHours(CONFIG.postHourUTC);
-        pill = now < due ? `<span class="status-pill due"><i class="dot"></i>Due today, ${due.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>`
-                         : `<span class="status-pill warn"><i class="dot"></i>Expected today, not logged yet</span>`;
+        else pill = `<span class="status-pill good"><i class="dot"></i>Posted · numbers due ${fmtDay(new Date(r.date.getTime() + DAY))}</span>`;
       } else {
-        pill = `<span class="status-pill"><i class="dot"></i>Scheduled</span>`;
+        const plan = planFor(r.date); group = plan.group; slides = plan.slides.map((x) => x + '.jpg');
+        if (r.kind === 'today') {
+          const due = new Date(r.date); due.setUTCHours(CONFIG.postHourUTC);
+          pill = now < due ? `<span class="status-pill due"><i class="dot"></i>Due today, ${fmtTime(due)}</span>` : `<span class="status-pill warn"><i class="dot"></i>Expected today, not logged yet</span>`;
+        } else pill = `<span class="status-pill"><i class="dot"></i>Day ${plan.day} of ${CONFIG.cycle.length}</span>`;
       }
-      const thumb = (file) => `<div class="thumb"><img src="images/${file}" alt="" loading="lazy" onerror="this.parentNode.textContent='${file.replace('SET_', '').replace('.jpg', '').replace('_A', ' A')}'"></div>`;
-      const dayLabel = isToday ? 'Today' : fmtDate(r.date).replace(/^\w+,\s*/, '');
+      const files = slides.length > 2 ? `${slides[0]} to ${slides[slides.length - 1]}` : slides.join(' then ');
       return `<div class="ledger-row ${isToday ? 'today' : ''}">
-        <div class="when"><b>${esc(dayLabel)}</b><span>${DAYNAMES[weekdayIndex(r.date)]}${r.kind === 'past' && r.stories[0] ? ' · ' + r.stories[0].postedAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : ''}</span></div>
-        <div class="what"><div class="thumbs">${thumb(set + '.jpg')}${thumb(set + '_A.jpg')}</div><div><div class="set">${esc(set)}</div><div class="files">${esc(set)}.jpg then ${esc(set)}_A.jpg</div></div></div>
+        <div class="when"><b>${isToday ? 'Today' : esc(fmtDay(r.date))}</b><span>${DAYNAMES[weekdayIndex(r.date)]}${timeText}</span></div>
+        <div class="what"><div class="thumbs">${slides.map(thumb).join('')}</div><div><div class="set">${esc(groupLabel(group))}</div><div class="files">${slides.length} slide${slides.length > 1 ? 's' : ''} · ${esc(files)}</div></div></div>
         ${pill}
       </div>`;
     }).join('');
-    const nextRow = rows.find((r) => r.kind !== 'past');
-    $('live-note').textContent = nextRow ? `next post ${isoDay(nextRow.date) === isoDay(today) ? 'today' : fmtDate(nextRow.date)}, then every second day` : '';
+    const nextRow = rows.find((r) => r.kind === 'today' || r.kind === 'next');
+    $('live-note').textContent = nextRow ? `next post ${isoDay(nextRow.date) === isoDay(today) ? 'today' : fmtDate(nextRow.date)}, then every day` : `loop starts ${fmtDate(start)}`;
   }
 
   // ---- automation health ----
@@ -420,23 +450,20 @@
     const runRow = (label, run) => {
       if (!run) return { k: label, v: 'Couldn’t check', sub: 'GitHub didn’t answer from here', cls: '' };
       const ok = run.conclusion === 'success';
-      const when = new Date(run.updated_at);
-      return { k: label, v: ok ? 'Ran fine' : (run.status !== 'completed' ? 'Running now' : 'Failed'), sub: fmtDateTime(when), cls: ok ? 'good' : (run.status !== 'completed' ? '' : 'bad'), href: run.html_url };
+      return { k: label, v: ok ? 'Ran fine' : (run.status !== 'completed' ? 'Running now' : 'Failed'), sub: fmtDateTime(new Date(run.updated_at)), cls: ok ? 'good' : (run.status !== 'completed' ? '' : 'bad'), href: run.html_url };
     };
     const [postRun, collectRun] = window.__STORY_DATA__ ? [null, null] : await Promise.all([ghRun('post-story.yml'), ghRun('collect-insights.yml')]);
     rows.push(runRow('Poster', postRun));
     rows.push(runRow('Insights collector', collectRun));
-
     const last = stories[stories.length - 1];
-    rows.push({ k: 'Last story logged', v: last ? fmtDate(last.day) : 'None yet', sub: last ? `${last.set} · ${last.postedAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}` : 'first post lands on the next scheduled day', cls: '' });
-
+    rows.push({ k: 'Last slide logged', v: last ? fmtDay(last.day) : 'None yet', sub: last ? `${groupLabel(last.group)} · ${last.filename} · ${fmtTime(last.postedAt)}` : 'first post lands on the loop’s first day', cls: '' });
     let tokenHtml = '';
     if (status && status.token_expires_at) {
       const exp = new Date(status.token_expires_at * 1000);
       const daysLeft = Math.floor((exp - now) / DAY);
       const cls = daysLeft <= 3 ? 'bad' : (daysLeft <= CONFIG.tokenWarnDays ? 'warn' : '');
       const pct = Math.max(0, Math.min(100, (daysLeft / 60) * 100));
-      rows.push({ k: 'Meta token', v: daysLeft < 0 ? 'Expired' : `${daysLeft} days left`, sub: `expires ${fmtDate(exp)} · refresh + update the secret`, cls: daysLeft < 0 ? 'bad' : cls });
+      rows.push({ k: 'Meta token', v: daysLeft < 0 ? 'Expired' : `${daysLeft} days left`, sub: `expires ${fmtDay(exp)} · refresh + update the secret`, cls: daysLeft < 0 ? 'bad' : cls });
       tokenHtml = `<div class="token-bar ${cls}"><i style="width:${pct}%"></i></div>`;
     } else if (status && status.token_is_valid === false) {
       rows.push({ k: 'Meta token', v: 'Invalid', sub: 'refresh it and update IG_ACCESS_TOKEN', cls: 'bad' });
@@ -447,21 +474,22 @@
   }
 
   // ---- KPIs ----
-  function renderKpis(stories, now) {
+  function renderKpis(stories, days, now) {
     const cut1 = now.getTime() - 7 * DAY, cut2 = now.getTime() - 14 * DAY;
-    const cur = stories.filter((s) => s.postedAt >= cut1);
-    const prev = stories.filter((s) => s.postedAt >= cut2 && s.postedAt < cut1);
-    const stay = (arr) => {
-      const d = sum(arr.filter((s) => s.slot === 'day'), 'views'), c = sum(arr.filter((s) => s.slot === 'companion'), 'views');
-      return d ? c / d : null;
+    const cur = stories.filter((s) => s.postedAt >= cut1), prev = stories.filter((s) => s.postedAt >= cut2 && s.postedAt < cut1);
+    const inWin = (d, lo, hi) => d.slides[0].postedAt >= lo && d.slides[0].postedAt < hi;
+    const completion = (ds) => {
+      const multi = ds.filter((d) => d.slides.length > 1 && firstOf(d).views && lastOf(d).views != null);
+      const f = multi.reduce((t, d) => t + firstOf(d).views, 0), l = multi.reduce((t, d) => t + lastOf(d).views, 0);
+      return f ? l / f : null;
     };
     const tiles = [
-      { label: 'Stories posted', cur: cur.length, prev: prev.length, kind: 'int' },
+      { label: 'Slides posted', cur: cur.length, prev: prev.length, kind: 'int' },
       { label: 'Views', cur: sum(cur, 'views'), prev: sum(prev, 'views'), kind: 'int' },
       { label: 'Reach', cur: sum(cur, 'reach'), prev: sum(prev, 'reach'), kind: 'int' },
       { label: 'Replies', cur: sum(cur, 'replies'), prev: sum(prev, 'replies'), kind: 'int' },
       { label: 'Shares', cur: sum(cur, 'shares'), prev: sum(prev, 'shares'), kind: 'int' },
-      { label: 'Stayed for slide 2', cur: stay(cur), prev: stay(prev), kind: 'pct' },
+      { label: 'Saw the last slide', cur: completion(days.filter((d) => inWin(d, cut1, Infinity))), prev: completion(days.filter((d) => inWin(d, cut2, cut1))), kind: 'pct' },
     ];
     $('kpis').innerHTML = tiles.map((t) => {
       const show = (v) => v == null ? '–' : (t.kind === 'pct' ? Math.round(v * 100) + '%' : fmt.format(v));
@@ -471,9 +499,7 @@
         const cls = ch > 0.005 ? 'up' : (ch < -0.005 ? 'down' : '');
         const arrow = cls === 'up' ? '▲' : (cls === 'down' ? '▼' : '●');
         delta = `<span class="delta ${cls}">${arrow} ${Math.abs(Math.round(ch * 100))}% <span class="prev">· was ${show(t.prev)}</span></span>`;
-      } else if (t.prev === 0 && t.cur) {
-        delta = `<span class="delta up">▲ new <span class="prev">· was 0</span></span>`;
-      }
+      } else if (t.prev === 0 && t.cur) delta = `<span class="delta up">▲ new <span class="prev">· was 0</span></span>`;
       return `<div class="kpi"><div class="label">${t.label}</div><div class="value">${show(t.cur)}</div>${delta}</div>`;
     }).join('');
   }
@@ -490,35 +516,35 @@
       el.addEventListener('mouseleave', hideTip);
     });
   }
-  function bar(x, y0, w, h, fill, extra = '') {
+  function bar(x, y0, w, h, fill) {
     if (h <= 0) return '';
-    const r = Math.min(4, w / 2, h);
-    const y = y0 - h;
-    return `<path d="M${x},${y0} V${y + r} Q${x},${y} ${x + r},${y} H${x + w - r} Q${x + w},${y} ${x + w},${y + r} V${y0} Z" fill="${fill}" ${extra}/>`;
+    const r = Math.min(4, w / 2, h), y = y0 - h;
+    return `<path d="M${x},${y0} V${y + r} Q${x},${y} ${x + r},${y} H${x + w - r} Q${x + w},${y} ${x + w},${y + r} V${y0} Z" fill="${fill}"/>`;
   }
   function niceMax(v) { if (v <= 0) return 1; const p = Math.pow(10, Math.floor(Math.log10(v))); const n = v / p; const m = n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10; return m * p; }
-  function yTicks(max) { return [0, 0.25, 0.5, 0.75, 1].map((f) => f * max); }
+  const yTicks = (max) => [0, 0.25, 0.5, 0.75, 1].map((f) => f * max);
   const S1 = 'var(--series-1)', S2 = 'var(--series-2)', GHOST = 'var(--ghost)';
+  const gridAndAxis = (max, L, R, T, ph, W) => yTicks(max).map((t) => { const y = T + ph - (t / max) * ph; return `<g class="grid"><line x1="${L}" x2="${W - R}" y1="${y}" y2="${y}"/></g><g class="axis"><text x="${L - 8}" y="${y + 4}" text-anchor="end">${fmt.format(t)}</text></g>`; }).join('');
 
-  function chartWeekly(stories, metric, now) {
+  function chartWeekly(stories, days, metric, now) {
     const el = $('chart-weekly');
     const thisMon = mondayOf(now);
     const weeks = [];
-    for (let i = 7; i >= 0; i--) { const start = new Date(thisMon.getTime() - i * 7 * DAY); weeks.push({ start, end: new Date(start.getTime() + 7 * DAY), rows: [] }); }
+    for (let i = 7; i >= 0; i--) { const start = new Date(thisMon.getTime() - i * 7 * DAY); weeks.push({ start, end: new Date(start.getTime() + 7 * DAY), rows: [], ndays: 0 }); }
     for (const s of stories) { const w = weeks.find((w) => s.postedAt >= w.start && s.postedAt < w.end); if (w) w.rows.push(s); }
+    for (const d of days) { const w = weeks.find((w) => d.slides[0].postedAt >= w.start && d.slides[0].postedAt < w.end); if (w) w.ndays++; }
     const vals = weeks.map((w) => sum(w.rows, metric));
-    const head = `<h3>${METRIC_LABEL[metric]} by week</h3><p class="sub">Both slides added together. Current week is still filling up.</p>`;
+    const head = `<h3>${METRIC_LABEL[metric]} by week</h3><p class="sub">Every slide added together. Current week is still filling up.</p>`;
     if (!stories.length) { el.innerHTML = head + '<div class="empty">Nothing to compare yet.</div>'; return; }
     const W = 520, H = 230, L = 44, R = 12, T = 18, B = 34, pw = W - L - R, ph = H - T - B;
     const max = niceMax(Math.max(...vals, 1));
     const slot = pw / weeks.length, bw = Math.min(40, slot * 0.6);
-    let g = '';
-    for (const t of yTicks(max)) { const y = T + ph - (t / max) * ph; g += `<g class="grid"><line x1="${L}" x2="${W - R}" y1="${y}" y2="${y}"/></g><g class="axis"><text x="${L - 8}" y="${y + 4}" text-anchor="end">${fmt.format(t)}</text></g>`; }
+    let g = gridAndAxis(max, L, R, T, ph, W);
     weeks.forEach((w, i) => {
       const x = L + i * slot + (slot - bw) / 2, h = (vals[i] / max) * ph, isCur = i === weeks.length - 1, isPrev = i === weeks.length - 2;
       const fill = isCur ? S1 : (isPrev ? 'var(--pink)' : GHOST);
-      const label = isCur ? 'This week' : (isPrev ? 'Last week' : fmtDate(w.start).replace(/^\w+,\s*/, ''));
-      const tipHtml = `<b>Week of ${fmtDate(w.start)}${isCur ? ' (so far)' : ''}</b><div class="row"><span>${METRIC_LABEL[metric]}</span><span>${fmt.format(vals[i])}</span></div><div class="row"><span>Stories</span><span>${w.rows.length}</span></div><div class="row"><span>Reach</span><span>${fmt.format(sum(w.rows, 'reach'))}</span></div>`;
+      const label = isCur ? 'This week' : (isPrev ? 'Last week' : fmtDay(w.start));
+      const tipHtml = `<b>Week of ${fmtDate(w.start)}${isCur ? ' (so far)' : ''}</b><div class="row"><span>${METRIC_LABEL[metric]}</span><span>${fmt.format(vals[i])}</span></div><div class="row"><span>Days posted</span><span>${w.ndays}</span></div><div class="row"><span>Slides</span><span>${w.rows.length}</span></div>`;
       g += bar(x, T + ph, bw, h, fill);
       if (isCur || isPrev) g += `<text class="dl" x="${x + bw / 2}" y="${T + ph - h - 6}" text-anchor="middle">${fmt.format(vals[i])}</text>`;
       g += `<g class="axis"><text x="${x + bw / 2}" y="${H - 12}" text-anchor="middle">${label}</text></g>`;
@@ -529,84 +555,88 @@
     bindTips(el);
   }
 
-  function chartSets(stories, metric) {
+  function chartContent(days, metric) {
     const el = $('chart-sets');
-    const head = `<h3>${METRIC_LABEL[metric]} by set</h3><p class="sub">Average per story, so a set that has posted more often isn’t flattered.</p>`;
-    if (!stories.length) { el.innerHTML = head + '<div class="empty">No sets have posted yet.</div>'; return; }
-    const rows = CONFIG.weekdaySets.map((set, i) => {
-      const day = stories.filter((s) => s.set === set && s.slot === 'day'), comp = stories.filter((s) => s.set === set && s.slot === 'companion');
-      return { set, dayName: DAYNAMES[i], a: avg(day, metric), b: avg(comp, metric), n: day.length };
+    const head = `<h3>${METRIC_LABEL[metric]} by content</h3><p class="sub">Average per posting, first slide against last. A set that has run more often isn’t flattered.</p>`;
+    if (!days.length) { el.innerHTML = head + '<div class="empty">Nothing has posted yet.</div>'; return; }
+    const order = [...new Set(CONFIG.cycle.map((c) => c.group))];
+    const rows = order.map((group) => {
+      const ds = days.filter((d) => d.group === group);
+      const multi = ds.filter((d) => d.slides.length > 1);
+      return { group, a: avg(ds.map(firstOf), metric), b: multi.length ? avg(multi.map(lastOf), metric) : null, n: ds.length, single: !multi.length && ds.length > 0 };
     });
-    const W = 520, H = 230, L = 96, R = 40, T = 8, B = 8, pw = W - L - R, ph = H - T - B;
+    const W = 520, H = 250, L = 108, R = 44, T = 8, B = 8, pw = W - L - R, ph = H - T - B;
     const max = niceMax(Math.max(...rows.map((r) => Math.max(r.a || 0, r.b || 0)), 1));
-    const slot = ph / rows.length, bh = Math.min(9, slot * 0.32);
+    const slot = ph / rows.length, bh = Math.min(9, slot * 0.3);
     let g = '';
     rows.forEach((r, i) => {
       const y = T + i * slot + slot / 2;
       const wa = ((r.a || 0) / max) * pw, wb = ((r.b || 0) / max) * pw;
-      g += `<g class="axis"><text x="${L - 10}" y="${y + 4}" text-anchor="end" style="font-weight:600;fill:var(--ink-2)">${r.set.replace('SET_', '')}</text><text x="${L - 10}" y="${y + 16}" text-anchor="end">${r.dayName}</text></g>`;
-      g += `<rect x="${L}" y="${y - bh - 1}" width="${wa}" height="${bh}" rx="3" fill="${S1}"/><rect x="${L}" y="${y + 1}" width="${wb}" height="${bh}" rx="3" fill="${S2}"/>`;
-      if (r.a != null) g += `<text class="dl" x="${L + wa + 6}" y="${y - 1}" font-size="10.5">${fmt.format(Math.round(r.a))}</text>`;
-      if (r.b != null) g += `<text class="dl" x="${L + wb + 6}" y="${y + bh + 1}" font-size="10.5" style="fill:var(--ink-3);font-weight:400">${fmt.format(Math.round(r.b))}</text>`;
-      const tipHtml = `<b>${r.set} · ${r.dayName}s</b><div class="row"><span>Day image avg</span><span>${r.a == null ? '–' : fmt.format(Math.round(r.a))}</span></div><div class="row"><span>Companion avg</span><span>${r.b == null ? '–' : fmt.format(Math.round(r.b))}</span></div><div class="row"><span>Times posted</span><span>${r.n}</span></div>`;
+      const name = groupLabel(r.group);
+      g += `<g class="axis"><text x="${L - 10}" y="${y + 4}" text-anchor="end" style="font-weight:600;fill:var(--ink-2)">${esc(name)}</text></g>`;
+      if (r.single) { g += `<rect x="${L}" y="${y - bh / 2}" width="${wa}" height="${bh}" rx="3" fill="${S1}"/>`; if (r.a != null) g += `<text class="dl" x="${L + wa + 6}" y="${y + 4}" font-size="10.5">${fmt.format(Math.round(r.a))}</text>`; }
+      else {
+        g += `<rect x="${L}" y="${y - bh - 1}" width="${wa}" height="${bh}" rx="3" fill="${S1}"/><rect x="${L}" y="${y + 1}" width="${wb}" height="${bh}" rx="3" fill="${S2}"/>`;
+        if (r.a != null) g += `<text class="dl" x="${L + wa + 6}" y="${y - 1}" font-size="10.5">${fmt.format(Math.round(r.a))}</text>`;
+        if (r.b != null) g += `<text class="dl" x="${L + wb + 6}" y="${y + bh + 1}" font-size="10.5" style="fill:var(--ink-3);font-weight:400">${fmt.format(Math.round(r.b))}</text>`;
+      }
+      const tipHtml = `<b>${esc(name)}</b><div class="row"><span>First slide avg</span><span>${r.a == null ? '–' : fmt.format(Math.round(r.a))}</span></div>${r.single ? '' : `<div class="row"><span>Last slide avg</span><span>${r.b == null ? '–' : fmt.format(Math.round(r.b))}</span></div>`}<div class="row"><span>Times posted</span><span>${r.n}</span></div>`;
       g += `<rect class="hit" x="0" y="${T + i * slot}" width="${W}" height="${slot}" data-tip="${esc(tipHtml)}"/>`;
     });
     g += `<line class="baseline" x1="${L}" x2="${L}" y1="${T}" y2="${T + ph}"/>`;
-    el.innerHTML = head + `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Average ${METRIC_LABEL[metric].toLowerCase()} per story for each weekday set">${g}</svg>`;
+    el.innerHTML = head + `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Average ${METRIC_LABEL[metric].toLowerCase()} per posting for each piece of content">${g}</svg>`;
     bindTips(el);
   }
 
-  function chartStories(stories, metric, now) {
+  function chartDays(days, metric, now) {
     const el = $('chart-stories');
     const since = now.getTime() - 28 * DAY;
-    const recent = stories.filter((s) => s.postedAt >= since);
-    const head = `<h3>${METRIC_LABEL[metric]} per story, last 4 weeks</h3><p class="sub">Slide 1 beside slide 2 for every posting day. Shaded bands are calendar weeks.</p>`;
+    const recent = days.filter((d) => d.slides[0].postedAt >= since);
+    const head = `<h3>${METRIC_LABEL[metric]} per day, last 4 weeks</h3><p class="sub">First slide beside last slide for every posting day. S1 to S6 are the sets, Q4 the four-slide quiz, Q1 the standalone. Shaded bands are calendar weeks.</p>`;
     if (!recent.length) { el.innerHTML = head + '<div class="empty">No stories in the last four weeks.</div>'; $('trend-note').textContent = ''; return; }
-    const days = [...new Set(recent.map((s) => s.date))].sort();
     const W = 1080, H = 260, L = 44, R = 12, T = 18, B = 40, pw = W - L - R, ph = H - T - B;
-    const max = niceMax(Math.max(...recent.map((s) => s[metric] || 0), 1));
-    const slot = pw / days.length, bw = Math.min(22, slot * 0.34), gap = 2;
+    const max = niceMax(Math.max(...recent.flatMap((d) => d.slides.map((s) => s[metric] || 0)), 1));
+    const slot = pw / recent.length, bw = Math.min(22, slot * 0.36), gap = 2;
     let g = '';
-    // week bands
-    const firstMon = mondayOf(utcDate(days[0]));
-    for (let k = 0, wStart = firstMon; wStart <= utcDate(days[days.length - 1]); wStart = new Date(wStart.getTime() + 7 * DAY), k++) {
+    const firstMon = mondayOf(recent[0].day);
+    for (let k = 0, wStart = firstMon; wStart <= recent[recent.length - 1].day; wStart = new Date(wStart.getTime() + 7 * DAY), k++) {
       const wEnd = new Date(wStart.getTime() + 7 * DAY);
-      const idxs = days.map((d, i) => [utcDate(d), i]).filter(([d]) => d >= wStart && d < wEnd).map(([, i]) => i);
+      const idxs = recent.map((d, i) => [d.day, i]).filter(([d]) => d >= wStart && d < wEnd).map(([, i]) => i);
       if (!idxs.length || k % 2 === 0) continue;
-      const x0 = L + idxs[0] * slot, x1 = L + (idxs[idxs.length - 1] + 1) * slot;
-      g += `<rect class="weekband" x="${x0}" y="${T}" width="${x1 - x0}" height="${ph}"/>`;
+      g += `<rect class="weekband" x="${L + idxs[0] * slot}" y="${T}" width="${(idxs[idxs.length - 1] + 1 - idxs[0]) * slot}" height="${ph}"/>`;
     }
-    for (const t of yTicks(max)) { const y = T + ph - (t / max) * ph; g += `<g class="grid"><line x1="${L}" x2="${W - R}" y1="${y}" y2="${y}"/></g><g class="axis"><text x="${L - 8}" y="${y + 4}" text-anchor="end">${fmt.format(t)}</text></g>`; }
-    days.forEach((d, i) => {
-      const dayS = recent.find((s) => s.date === d && s.slot === 'day'), compS = recent.find((s) => s.date === d && s.slot === 'companion');
+    g += gridAndAxis(max, L, R, T, ph, W);
+    const showDate = (i) => recent.length <= 16 || i % 2 === 0;
+    recent.forEach((d, i) => {
+      const f = firstOf(d), l = d.slides.length > 1 ? lastOf(d) : null;
       const cx = L + i * slot + slot / 2;
-      const xa = cx - bw - gap / 2, xb = cx + gap / 2;
-      const ha = ((dayS && dayS[metric]) || 0) / max * ph, hb = ((compS && compS[metric]) || 0) / max * ph;
-      g += bar(xa, T + ph, bw, ha, S1) + bar(xb, T + ph, bw, hb, S2);
-      if (i === days.length - 1) { if (dayS && dayS[metric] != null) g += `<text class="dl" x="${xa + bw / 2}" y="${T + ph - ha - 6}" text-anchor="middle">${fmt.format(dayS[metric])}</text>`; if (compS && compS[metric] != null) g += `<text class="dl" x="${xb + bw / 2}" y="${T + ph - hb - 6}" text-anchor="middle">${fmt.format(compS[metric])}</text>`; }
-      const dd = utcDate(d);
-      g += `<g class="axis"><text x="${cx}" y="${H - 20}" text-anchor="middle">${dd.getUTCDate()} ${dd.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' })}</text><text x="${cx}" y="${H - 7}" text-anchor="middle" style="font-weight:600;fill:var(--ink-2)">${(dayS || compS).set.replace('SET_', '')}</text></g>`;
-      const line = (s, name) => s ? `<div class="row"><span>${name}</span><span>${s[metric] == null ? (s.missed ? 'missed' : 'pending') : fmt.format(s[metric])}</span></div>` : `<div class="row"><span>${name}</span><span>not posted</span></div>`;
-      const exit = dayS && dayS.exitRate != null ? `<div class="row"><span>Exit rate, slide 1</span><span>${Math.round(dayS.exitRate * 100)}%</span></div>` : '';
-      const tipHtml = `<b>${fmtDate(dd)} · ${(dayS || compS).set}</b>${line(dayS, 'Day image')}${line(compS, 'Companion')}${exit}`;
-      g += `<rect class="hit" x="${L + i * slot}" y="${T}" width="${slot}" height="${ph}" data-tip="${esc(tipHtml)}"/>`;
+      const hf = ((f[metric] || 0) / max) * ph, hl = l ? ((l[metric] || 0) / max) * ph : 0;
+      if (l) g += bar(cx - bw - gap / 2, T + ph, bw, hf, S1) + bar(cx + gap / 2, T + ph, bw, hl, S2);
+      else g += bar(cx - bw / 2, T + ph, bw, hf, S1);
+      if (i === recent.length - 1 && f[metric] != null) g += `<text class="dl" x="${l ? cx - bw / 2 - gap / 2 : cx}" y="${T + ph - hf - 6}" text-anchor="middle">${fmt.format(f[metric])}</text>`;
+      if (showDate(i)) g += `<g class="axis"><text x="${cx}" y="${H - 20}" text-anchor="middle">${d.day.getUTCDate()} ${d.day.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' })}</text></g>`;
+      g += `<g class="axis"><text x="${cx}" y="${H - 7}" text-anchor="middle" style="font-weight:600;fill:var(--ink-2)">${groupShort(d.group)}</text></g>`;
+      const lines = d.slides.map((s) => `<div class="row"><span>${s.slide}. ${esc(s.filename.replace('.jpg', ''))}</span><span>${s[metric] == null ? (s.missed ? 'missed' : 'pending') : fmt.format(s[metric])}</span></div>`).join('');
+      const exit = f.exitRate != null ? `<div class="row"><span>Exit rate, slide 1</span><span>${Math.round(f.exitRate * 100)}%</span></div>` : '';
+      g += `<rect class="hit" x="${L + i * slot}" y="${T}" width="${slot}" height="${ph}" data-tip="${esc(`<b>${fmtDate(d.day)} · ${groupLabel(d.group)}</b>${lines}${exit}`)}"/>`;
     });
     g += `<line class="baseline" x1="${L}" x2="${W - R}" y1="${T + ph}" y2="${T + ph}"/>`;
-    el.innerHTML = head + `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${METRIC_LABEL[metric]} for each story in the last four weeks">${g}</svg>`;
+    el.innerHTML = head + `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${METRIC_LABEL[metric]} for the first and last slide of each posting day in the last four weeks">${g}</svg>`;
     bindTips(el);
-    $('trend-note').textContent = `${recent.length} stories across ${days.length} posting days`;
+    $('trend-note').textContent = `${recent.reduce((t, d) => t + d.slides.length, 0)} slides across ${recent.length} posting days`;
   }
 
   // ---- table ----
   function renderTable(stories) {
     const rows = [...stories].reverse();
-    const cols = ['Posted', 'Set', 'Slide', 'Views', 'Reach', 'Replies', 'Shares', 'Profile visits', 'Follows', 'Exit rate', 'Tapped on', 'Tapped back'];
+    const cols = ['Posted', 'Content', 'Slide', 'Views', 'Reach', 'Replies', 'Shares', 'Profile visits', 'Follows', 'Exit rate', 'Tapped on', 'Tapped back'];
     const cell = (v, pct) => v == null ? '<td class="muted">–</td>' : `<td>${pct ? Math.round(v * 100) + '%' : fmt.format(v)}</td>`;
     const body = rows.map((s) => {
       const state = s.collected ? '' : (s.missed ? ' <span class="muted">(missed)</span>' : ' <span class="muted">(pending)</span>');
-      return `<tr><td class="l">${fmtDate(s.day)} · ${s.postedAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</td><td class="l">${esc(s.set)}</td><td class="l"><span class="slide" style="background:${s.slot === 'day' ? S1 : S2}"></span>${s.slot === 'day' ? '1 · day image' : '2 · companion'}${state}</td>${cell(s.views)}${cell(s.reach)}${cell(s.replies)}${cell(s.shares)}${cell(s.profile_visits)}${cell(s.follows)}${cell(s.exitRate, true)}${cell(s.collected ? s.tap_next : null)}${cell(s.tap_back)}</tr>`;
+      const sw = s.isFirst ? S1 : (s.isLast ? S2 : 'var(--ink-3)');
+      return `<tr><td class="l">${fmtDate(s.day)} · ${fmtTime(s.postedAt)}</td><td class="l">${esc(groupLabel(s.group))}</td><td class="l"><span class="slide" style="background:${sw}"></span>${s.slide} of ${s.slides_total} · ${esc(s.filename.replace('.jpg', ''))}${state}</td>${cell(s.views)}${cell(s.reach)}${cell(s.replies)}${cell(s.shares)}${cell(s.profile_visits)}${cell(s.follows)}${cell(s.exitRate, true)}${cell(s.collected ? s.tap_next : null)}${cell(s.tap_back)}</tr>`;
     }).join('');
-    $('table').innerHTML = `<thead><tr>${cols.map((c, i) => `<th class="${i < 3 ? 'l' : ''}">${c}</th>`).join('')}</tr></thead><tbody>${body || `<tr><td colspan="${cols.length}" class="l muted">No stories logged yet. The first row appears the moment the poster runs.</td></tr>`}</tbody>`;
+    $('table').innerHTML = `<thead><tr>${cols.map((c, i) => `<th class="${i < 3 ? 'l' : ''}">${c}</th>`).join('')}</tr></thead><tbody>${body || `<tr><td colspan="${cols.length}" class="l muted">No slides logged yet. The first row appears the moment the poster runs.</td></tr>`}</tbody>`;
     $('register-note').textContent = rows.length ? `${rows.length} slides · newest first` : '';
   }
 
@@ -617,10 +647,11 @@
     const data = await loadData();
     if (data.sample) $('sample-banner').hidden = false;
     const stories = buildStories(data.posts || [], data.insights || []);
+    const days = groupDays(stories);
     let metric = 'views';
-    const draw = () => { chartWeekly(stories, metric, now); chartSets(stories, metric); chartStories(stories, metric, now); };
-    renderLedger(stories, now);
-    renderKpis(stories, now);
+    const draw = () => { chartWeekly(stories, days, metric, now); chartContent(days, metric); chartDays(days, metric, now); };
+    renderLedger(days, now);
+    renderKpis(stories, days, now);
     draw();
     renderTable(stories);
     renderHealth(data.status, stories, now);
@@ -631,7 +662,7 @@
       draw();
     });
     const lastCollect = data.status && data.status.last_collect_at ? fmtDateTime(new Date(data.status.last_collect_at)) : 'never';
-    $('foot').innerHTML = `Data lives in this repo: <a href="https://github.com/${CONFIG.owner}/${CONFIG.repo}/tree/main/data" target="_blank" rel="noopener">data/</a>. Posts are logged by the poster as they publish; numbers are collected daily at 15:30 UTC. Last collection: ${esc(lastCollect)}. Graph API ${esc((data.status && data.status.api_version) || '')}.`;
+    $('foot').innerHTML = `Data lives in this repo: <a href="https://github.com/${CONFIG.owner}/${CONFIG.repo}/tree/main/data" target="_blank" rel="noopener">data/</a>. Slides are logged by the poster as they publish; numbers are collected daily at 15:30 UTC. Last collection: ${esc(lastCollect)}. Graph API ${esc((data.status && data.status.api_version) || '')}.`;
   }
   boot().catch((err) => { $('ledger').innerHTML = `<div class="ledger-row"><div class="when"><b>Couldn’t load</b></div><div class="what">${esc(err.message)}</div></div>`; console.error(err); });
 })();

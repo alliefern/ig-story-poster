@@ -186,7 +186,8 @@ def main() -> None:
     for post in due:
         posted_at = datetime.fromisoformat(post["posted_at"])
         hours_after = round((now - posted_at).total_seconds() / 3600, 2)
-        print(f"Collecting {post['media_id']} ({post['set']} {post['slot']}, {hours_after}h after posting)...")
+        print(f"Collecting {post['media_id']} ({post['group']} slide {post['slide']} of {post['slides_total']}, "
+              f"{hours_after}h after posting)...")
         metrics, errors = fetch_story_metrics(post["media_id"], token)
         if metrics:
             collected += 1
@@ -204,7 +205,7 @@ def main() -> None:
         })
 
     for post in expired:
-        print(f"Marking {post['media_id']} ({post['date']} {post['set']} {post['slot']}) as missed: "
+        print(f"Marking {post['media_id']} ({post['date']} {post['group']} slide {post['slide']}) as missed: "
               f"the story expired before insights were collected.")
         append_jsonl(INSIGHTS_PATH, {
             "media_id": post["media_id"],

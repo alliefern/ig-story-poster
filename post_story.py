@@ -1,35 +1,40 @@
 #!/usr/bin/env python3
 """
-Posts two images to an Instagram Story every other calendar day:
-  1. The day's set image, which depends on which weekday it is
-     (images/SET_ONE.jpg through images/SET_SEVEN.jpg, one per weekday)
-  2. That set's companion image, posted second
-     (images/SET_ONE_A.jpg through images/SET_SEVEN_A.jpg)
+Posts a day's worth of images to an Instagram Story, every day, following a fixed
+12-day loop:
 
-Each weekday is locked to one set (Monday = SET_ONE, Tuesday = SET_TWO, ... Sunday =
-SET_SEVEN). If you want the "second image" to be visually identical every single day,
-just upload the same file content as each SET_N_A.jpg — the script doesn't care, it
-just posts whatever's in that slot.
+  Day 1   SET_ONE, SET_ONE_A              Day 7   SET_FOUR, SET_FOUR_A
+  Day 2   QUIZ_ONE ... QUIZ_FOUR          Day 8   QUIZ_STANDALONE
+  Day 3   SET_TWO, SET_TWO_A              Day 9   SET_FIVE, SET_FIVE_A
+  Day 4   QUIZ_STANDALONE                 Day 10  QUIZ_ONE ... QUIZ_FOUR
+  Day 5   SET_THREE, SET_THREE_A          Day 11  SET_SIX, SET_SIX_A
+  Day 6   QUIZ_ONE ... QUIZ_FOUR          Day 12  QUIZ_STANDALONE
 
-How the "every other day" logic works
---------------------------------------
-Meta's API has no concept of "every other day" — it just posts when you tell it to.
-So this script runs every day (via the GitHub Actions cron in this repo) and, each time,
-checks whether today is a "posting day" by counting days since a REFERENCE_DATE and
-checking if that count is even. Change REFERENCE_DATE (below, or via env var) to shift
-which specific days are "on" days — e.g. set it to a day you post, and every 2nd day after
-that will post too.
+Day 13 is Day 1 again. Slides post in the order listed, a few seconds apart, so
+they appear in that order in the Story. The loop is edited in CYCLE below.
+
+Which day is which
+------------------
+Day 1 is CYCLE_START_DATE (an env var, set in the GitHub Actions workflow). The
+script counts days from there and takes the remainder after dividing by 12. If
+the workflow first runs after that date, it simply joins the loop part-way
+through, which is fine. Before that date it posts nothing.
+
+What Meta can and can't do here
+-------------------------------
+Stories posted through the API are plain images. No quiz sticker, poll, slider,
+link or mention can be attached. A "quiz" here is an image that looks like one;
+people answer by replying or by tapping through to the next slide.
 
 Requirements
 ------------
 - An Instagram Business or Creator account linked to a Facebook Page (required by Meta
-  for any API posting — there is no way around this for personal accounts).
+  for any API posting; there is no way around this for personal accounts).
 - A Meta access token with instagram_basic + instagram_content_publish permissions,
-  exchanged for a long-lived token (lasts ~60 days, must be refreshed — see README).
+  exchanged for a long-lived token (lasts ~60 days, must be refreshed, see README).
 - Images hosted at a public URL Meta's servers can fetch. This script assumes they live
   in THIS repo (under images/) and are referenced via raw.githubusercontent.com, which
-  means the repo (or at least this folder) needs to be public. See README for alternatives
-  if you'd rather not make the repo public.
+  means the repo needs to be public. See README for alternatives.
 
 Env vars required (set as GitHub repo secrets, see README):
   IG_USER_ID       - your Instagram Business Account ID (numeric)
@@ -37,10 +42,11 @@ Env vars required (set as GitHub repo secrets, see README):
   IMAGE_BASE_URL   - public base URL where images/ is served from
                       e.g. https://raw.githubusercontent.com/<you>/<repo>/main/images
 Optional:
-  REFERENCE_DATE   - YYYY-MM-DD, defaults to 2026-09-01. Days-since-this-date even = post.
-  DATA_DIR         - where to write the post log (default: data/). Each published story is
-                     appended to data/posts.jsonl so collect_insights.py and the dashboard
-                     (index.html) know what went live and when.
+  CYCLE_START_DATE   - YYYY-MM-DD that counts as Day 1. Defaults to 2026-09-05.
+  CYCLE_DAY_OVERRIDE - 1 to 12. Post that day's slides regardless of the date. For testing.
+  DATA_DIR           - where to write the post log (default: data/). Each published slide
+                       is appended to data/posts.jsonl so collect_insights.py and the
+                       dashboard (index.html) know what went live and when.
 """
 
 import json
@@ -54,21 +60,36 @@ GRAPH_API_VERSION = "v21.0"
 GRAPH_BASE = f"https://graph.facebook.com/{GRAPH_API_VERSION}"
 DATA_DIR = os.environ.get("DATA_DIR", "data")
 
-WEEKDAY_SETS = {
-    0: "SET_ONE",    # Monday
-    1: "SET_TWO",    # Tuesday
-    2: "SET_THREE",  # Wednesday
-    3: "SET_FOUR",   # Thursday
-    4: "SET_FIVE",   # Friday
-    5: "SET_SIX",    # Saturday
-    6: "SET_SEVEN",  # Sunday
-}
+CYCLE_LENGTH_DAYS = 12
+QUIZ = ["QUIZ_ONE", "QUIZ_TWO", "QUIZ_THREE", "QUIZ_FOUR"]
+STANDALONE = ["QUIZ_STANDALONE"]
+
+# One entry per day of the loop: a label for the day, and the slides in posting order.
+# Filenames are <slide>.jpg inside images/. Uppercase matters: GitHub URLs are case-sensitive.
+CYCLE = [
+    ("SET_ONE", ["SET_ONE", "SET_ONE_A"]),
+    ("QUIZ", QUIZ),
+    ("SET_TWO", ["SET_TWO", "SET_TWO_A"]),
+    ("QUIZ_STANDALONE", STANDALONE),
+    ("SET_THREE", ["SET_THREE", "SET_THREE_A"]),
+    ("QUIZ", QUIZ),
+    ("SET_FOUR", ["SET_FOUR", "SET_FOUR_A"]),
+    ("QUIZ_STANDALONE", STANDALONE),
+    ("SET_FIVE", ["SET_FIVE", "SET_FIVE_A"]),
+    ("QUIZ", QUIZ),
+    ("SET_SIX", ["SET_SIX", "SET_SIX_A"]),
+    ("QUIZ_STANDALONE", STANDALONE),
+]
+assert len(CYCLE) == CYCLE_LENGTH_DAYS
 
 
-def is_posting_day(reference_date_str: str, today: date) -> bool:
-    reference_date = datetime.strptime(reference_date_str, "%Y-%m-%d").date()
-    delta_days = (today - reference_date).days
-    return delta_days % 2 == 0
+def cycle_day(start_date_str: str, today: date) -> int | None:
+    """1-based day of the 12-day loop for `today`, or None if the loop hasn't started yet."""
+    start = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+    delta_days = (today - start).days
+    if delta_days < 0:
+        return None
+    return delta_days % CYCLE_LENGTH_DAYS + 1
 
 
 def require_env(name: str) -> str:
@@ -128,7 +149,7 @@ def publish_container(ig_user_id: str, access_token: str, container_id: str) -> 
     return resp.json()["id"]
 
 
-def record_post(media_id: str, set_name: str, slot: str, filename: str) -> None:
+def record_post(media_id: str, group: str, slide: int, slides_total: int, filename: str) -> None:
     """Append one line to data/posts.jsonl describing a story that just went live.
 
     The insights collector (collect_insights.py) reads this to know which media IDs to
@@ -141,8 +162,9 @@ def record_post(media_id: str, set_name: str, slot: str, filename: str) -> None:
         "media_id": media_id,
         "posted_at": now.isoformat(timespec="seconds"),
         "date": now.date().isoformat(),
-        "set": set_name,
-        "slot": slot,
+        "group": group,
+        "slide": slide,
+        "slides_total": slides_total,
         "filename": filename,
         "run_id": os.environ.get("GITHUB_RUN_ID"),
     }
@@ -152,7 +174,7 @@ def record_post(media_id: str, set_name: str, slot: str, filename: str) -> None:
 
 def post_image_to_story(
     ig_user_id: str, access_token: str, image_url: str, label: str,
-    set_name: str = "", slot: str = "", filename: str = "",
+    group: str = "", slide: int = 1, slides_total: int = 1, filename: str = "",
 ) -> str:
     print(f"Creating story container for {label} ({image_url})...")
     container_id = create_story_container(ig_user_id, access_token, image_url)
@@ -160,34 +182,42 @@ def post_image_to_story(
     wait_until_ready(container_id, access_token)
     media_id = publish_container(ig_user_id, access_token, container_id)
     print(f"  posted. media id: {media_id}")
-    record_post(media_id, set_name, slot, filename)
+    record_post(media_id, group, slide, slides_total, filename)
     return media_id
 
 
 def main() -> None:
     today = date.today()
-    reference_date_str = os.environ.get("REFERENCE_DATE", "2026-09-01")
+    start_date_str = os.environ.get("CYCLE_START_DATE", "2026-09-05")
 
-    if not is_posting_day(reference_date_str, today):
-        print(f"{today.isoformat()} is not a posting day (reference {reference_date_str}). Skipping.")
-        return
+    override = os.environ.get("CYCLE_DAY_OVERRIDE", "").strip()
+    if override:
+        day = int(override)
+        if not 1 <= day <= CYCLE_LENGTH_DAYS:
+            print(f"ERROR: CYCLE_DAY_OVERRIDE must be 1 to {CYCLE_LENGTH_DAYS}, got {override}", file=sys.stderr)
+            sys.exit(1)
+        print(f"CYCLE_DAY_OVERRIDE set: posting Day {day} content regardless of the date.")
+    else:
+        day = cycle_day(start_date_str, today)
+        if day is None:
+            print(f"{today.isoformat()} is before CYCLE_START_DATE {start_date_str}. Nothing to post yet.")
+            return
 
     ig_user_id = require_env("IG_USER_ID")
     access_token = require_env("IG_ACCESS_TOKEN")
     image_base_url = require_env("IMAGE_BASE_URL").rstrip("/")
 
-    set_name = WEEKDAY_SETS[today.weekday()]
-    day_filename = f"{set_name}.jpg"
-    companion_filename = f"{set_name}_A.jpg"
-    day_image_url = f"{image_base_url}/{day_filename}"
-    companion_image_url = f"{image_base_url}/{companion_filename}"
+    group, slides = CYCLE[day - 1]
+    print(f"{today.isoformat()} is Day {day} of {CYCLE_LENGTH_DAYS} ({group}). "
+          f"Posting {len(slides)} slide(s): {', '.join(slides)}.")
 
-    print(f"{today.isoformat()} is a posting day. Posting {day_filename} then {companion_filename}.")
-
-    post_image_to_story(ig_user_id, access_token, day_image_url, f"day image ({day_filename})",
-                        set_name=set_name, slot="day", filename=day_filename)
-    post_image_to_story(ig_user_id, access_token, companion_image_url, f"companion image ({companion_filename})",
-                        set_name=set_name, slot="companion", filename=companion_filename)
+    for index, slide in enumerate(slides, start=1):
+        filename = f"{slide}.jpg"
+        post_image_to_story(
+            ig_user_id, access_token, f"{image_base_url}/{filename}",
+            f"slide {index} of {len(slides)} ({filename})",
+            group=group, slide=index, slides_total=len(slides), filename=filename,
+        )
 
     print("Done.")
 
