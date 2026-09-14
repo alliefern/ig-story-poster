@@ -22,3 +22,7 @@
 {"media_id": "18088381922680606", "collected_at": "2026-09-12T17:46:26+00:00", "hours_after_post": 22.84, "metrics": {"views": 18, "reach": 15, "replies": 0, "shares": 0, "total_interactions": 0, "profile_visits": 0, "follows": 0, "navigation": {"tap_exit": 1, "tap_forward": 9, "swipe_forward": 3}, "navigation_total": 13}, "errors": []}
 {"media_id": "17968654398141673", "collected_at": "2026-09-13T18:16:53+00:00", "hours_after_post": null, "metrics": {}, "errors": ["expired before insights were collected"]}
 {"media_id": "17957341551233092", "collected_at": "2026-09-13T18:16:53+00:00", "hours_after_post": null, "metrics": {}, "errors": ["expired before insights were collected"]}
+{"media_id": "18466223248137907", "collected_at": "2026-09-14T19:53:54+00:00", "hours_after_post": null, "metrics": {}, "errors": ["expired before insights were collected"]}
+{"media_id": "18116333126057270", "collected_at": "2026-09-14T19:53:54+00:00", "hours_after_post": null, "metrics": {}, "errors": ["expired before insights were collected"]}
+{"media_id": "18153614071516882", "collected_at": "2026-09-14T19:53:54+00:00", "hours_after_post": null, "metrics": {}, "errors": ["expired before insights were collected"]}
+{"media_id": "18099978749303608", "collected_at": "2026-09-14T19:53:54+00:00", "hours_after_post": null, "metrics": {}, "errors": ["expired before insights were collected"]}
