@@ -85,6 +85,10 @@ def graph_base(access_token: str) -> str:
     return f"https://{host}/{GRAPH_API_VERSION}"
 DATA_DIR = os.environ.get("DATA_DIR", "data")
 
+# All existing creatives withdrawn pending Automagic Academy replacements.
+# Resume only after replacing/reviewing the assets; mirror in index.html.
+POSTING_PAUSED = True
+
 CYCLE_LENGTH_DAYS = 12
 QUIZ = ["QUIZ_ONE", "QUIZ_TWO", "QUIZ_THREE", "QUIZ_FOUR"]
 STANDALONE = ["QUIZ_STANDALONE"]
@@ -258,6 +262,10 @@ def post_image_to_story(
 
 
 def main() -> None:
+    if POSTING_PAUSED:
+        print("Story posting paused: existing creatives withdrawn pending Automagic Academy replacements.")
+        return
+
     today = date.today()
     start_date_str = os.environ.get("CYCLE_START_DATE", "2026-09-04")
 
