@@ -295,6 +295,7 @@
     cycleStartDate: '2026-09-04',    // same value as CYCLE_START_DATE in post-story.yml (Day 1)
     postHourUTC: 16,                 // the cron hour in post-story.yml
     tokenWarnDays: 14,
+    postingPaused: true, // Existing creatives withdrawn; mirror POSTING_PAUSED in post_story.py.
     // same order as CYCLE in post_story.py
     cycle: [
       { group: 'SET_ONE', slides: ['SET_ONE', 'SET_ONE_A'] },
@@ -402,7 +403,7 @@
     const rows = [];
     for (const d of days.slice(-2)) rows.push({ date: d.day, kind: 'past', posted: d });
     const start = utcDate(CONFIG.cycleStartDate);
-    for (let i = 0, found = 0; found < 5 && i < 14; i++) {
+    for (let i = 0, found = 0; !CONFIG.postingPaused && found < 5 && i < 14; i++) {
       const d = new Date(today.getTime() + i * DAY);
       if (i === 0 && byDate.has(isoDay(d))) continue;
       if (d < start) { if (i === 0) rows.push({ date: d, kind: 'notyet' }); continue; }
@@ -440,7 +441,7 @@
       </div>`;
     }).join('');
     const nextRow = rows.find((r) => r.kind === 'today' || r.kind === 'next');
-    $('live-note').textContent = nextRow ? `next post ${isoDay(nextRow.date) === isoDay(today) ? 'today' : fmtDate(nextRow.date)}, then every day` : `loop starts ${fmtDate(start)}`;
+    $('live-note').textContent = CONFIG.postingPaused ? 'Posting paused: awaiting Automagic Academy creatives' : nextRow ? `next post ${isoDay(nextRow.date) === isoDay(today) ? 'today' : fmtDate(nextRow.date)}, then every day` : `loop starts ${fmtDate(start)}`;
   }
 
   // ---- automation health ----
