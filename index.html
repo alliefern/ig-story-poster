@@ -295,6 +295,11 @@
     cycleStartDate: '2026-09-04',    // same value as CYCLE_START_DATE in post-story.yml (Day 1)
     postHourUTC: 16,                 // the cron hour in post-story.yml
     tokenWarnDays: 14,
+    // Fixed two-week trial; keep in sync with post_story.py. End is exclusive.
+    experiment: {
+      start: '2026-10-02', end: '2026-10-16',
+      slots: { 6: 1, 10: 3 },
+    },
     // same order as CYCLE in post_story.py
     cycle: [
       { group: 'SET_ONE', slides: ['SET_ONE', 'SET_ONE_A'] },
@@ -333,7 +338,14 @@
   const mondayOf = (d) => { const x = new Date(d); const wd = (x.getUTCDay() + 6) % 7; x.setUTCDate(x.getUTCDate() - wd); x.setUTCHours(0, 0, 0, 0); return x; };
   const weekdayIndex = (d) => (d.getUTCDay() + 6) % 7;
   const cycleDay = (d) => { const n = Math.round((d - utcDate(CONFIG.cycleStartDate)) / DAY); return n < 0 ? null : (n % CONFIG.cycle.length) + 1; };
-  const planFor = (d) => { const n = cycleDay(d); return n ? { day: n, ...CONFIG.cycle[n - 1] } : null; };
+  const planFor = (d) => {
+    const n = cycleDay(d);
+    if (!n) return null;
+    const trial = CONFIG.experiment;
+    const active = trial && isoDay(d) >= trial.start && isoDay(d) < trial.end;
+    const slot = active ? (trial.slots[n] || n) : n;
+    return { day: n, ...CONFIG.cycle[slot - 1] };
+  };
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const $ = (id) => document.getElementById(id);
 

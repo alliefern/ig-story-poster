@@ -1,5 +1,10 @@
 # Instagram Story auto-poster
 
+**Temporary rotation experiment:** October 2–15, 2026 substitutes SET_ONE on
+cycle day 6 and SET_TWO on day 10, then automatically returns to the baseline
+on October 16. See [the experiment plan](ROTATION_EXPERIMENT.md) for the full
+before/after cycle, measurement rules, end condition and early rollback.
+
 Posts to your Instagram Story every day, on autopilot via GitHub Actions, following
 a 12-day loop: a two-slide set one day, quiz slides the next, and round again.
 

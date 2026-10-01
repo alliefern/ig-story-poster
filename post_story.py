@@ -107,6 +107,24 @@ CYCLE = [
 ]
 assert len(CYCLE) == CYCLE_LENGTH_DAYS
 
+# Temporary slot substitutions, not a new cycle or a reset of its anchor.
+# End is exclusive: the original rotation resumes on October 16, automatically.
+# Keep these dates/mappings in sync with CONFIG.experiment in index.html.
+ROTATION_EXPERIMENT_START = date(2026, 10, 2)
+ROTATION_EXPERIMENT_END = date(2026, 10, 16)
+ROTATION_EXPERIMENT_SLOTS = {6: 1, 10: 3}
+
+
+def plan_for_day(day: int, today: date, *, manual_override: bool = False):
+    """Return the existing creative pair for a slot, within the fixed trial only.
+
+    Manual day overrides retain their original meaning (the baseline CYCLE).
+    Clearing ROTATION_EXPERIMENT_SLOTS rolls back early without changing logs.
+    """
+    if not manual_override and ROTATION_EXPERIMENT_START <= today < ROTATION_EXPERIMENT_END:
+        day = ROTATION_EXPERIMENT_SLOTS.get(day, day)
+    return CYCLE[day - 1]
+
 
 def cycle_day(start_date_str: str, today: date) -> int | None:
     """1-based day of the 12-day loop for `today`, or None if the loop hasn't started yet."""
@@ -283,7 +301,7 @@ def main() -> None:
     access_token = require_env("IG_ACCESS_TOKEN")
     image_base_url = require_env("IMAGE_BASE_URL").rstrip("/")
 
-    group, slides = CYCLE[day - 1]
+    group, slides = plan_for_day(day, today, manual_override=bool(override))
     print(f"{today.isoformat()} is Day {day} of {CYCLE_LENGTH_DAYS} ({group}). "
           f"Posting {len(slides)} slide(s): {', '.join(slides)}.")
     print(f"Using {graph_base(access_token)} for account {ig_user_id} "
