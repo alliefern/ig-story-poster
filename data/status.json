@@ -1,11 +1,11 @@
 {
-  "last_collect_at": "2026-10-10T19:24:48+00:00",
+  "last_collect_at": "2026-10-11T19:37:29+00:00",
   "last_collect_ok": true,
   "stories_collected": 0,
   "stories_failed": 0,
   "api_version": "v21.0",
-  "token_checked_at": "2026-10-10T19:24:48+00:00",
-  "token_check_error": "Application does not have permission for this action (code 10, subcode None)",
+  "token_checked_at": "2026-10-11T19:37:29+00:00",
+  "token_check_error": "Error validating access token: The session has been invalidated because the user changed their password or Facebook has changed the session for security reasons. (code 190, subcode 0)",
   "token_issued": "2026-09-04",
   "token_expires_at": 1793664000,
   "token_expiry_is_estimated": true
